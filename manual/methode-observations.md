@@ -123,6 +123,6 @@
 
 ![qfield12.jpg](./img/qfield12.jpg)
 
-- Envoyer à l’adresse «uclimdata@gmail.com» en indiquant dans l’objet observations et la date, par exemple «observations 20230621»
+- Envoyer à l’adresse «uclimdata@gmail.com» en indiquant dans l’objet observations, la date et le prénom, par exemple : «observations 20230621 martin»
 
 ![qfield13.jpg](./img/qfield13.jpg)
