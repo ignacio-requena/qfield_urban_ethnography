@@ -114,7 +114,15 @@
 - Appuyer sur le bouton options en noir avec trois lignes dans l’angle supérieur gauche de l’écran.
 - Appuyer sur la roue d’outil de configuration
 - Appuyer «Ouvrir le dossier du projet»
+
+![qfield11.jpg](./img/qfield11.jpg)
+
 - Selectionner le fichier qui contient l’ensemble d’observations «commerce_feydeau_qfield.gpkg»
-- Appuyer le bouton tout à droite avec trois petits points et selectionner «envoyer vers» dans le menu depliable
+- Appuyer le bouton tout à droite avec trois petits points et selectionner «envoyer vers» dans le menu dépliable
 - Selectionner «Gmail» 
+
+![qfield12.jpg](./img/qfield12.jpg)
+
 - Envoyer à l’adresse «uclimdata@gmail.com» en indiquant dans l’objet observations et la date, par exemple «observations 20230621»
+
+![qfield13.jpg](./img/qfield13.jpg)
