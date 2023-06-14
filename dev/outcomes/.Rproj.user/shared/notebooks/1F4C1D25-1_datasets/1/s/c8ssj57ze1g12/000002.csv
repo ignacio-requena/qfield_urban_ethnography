@@ -1,0 +1,10 @@
+"0","```r
+
+root <- getwd()
+setwd(file.path(root,\"1_dataset\"))
+
+st_write(s.df,\"s_df.gpkg\",append=FALSE)
+
+st_write(m.df,\"m_df.gpkg\",append=FALSE)
+
+```"

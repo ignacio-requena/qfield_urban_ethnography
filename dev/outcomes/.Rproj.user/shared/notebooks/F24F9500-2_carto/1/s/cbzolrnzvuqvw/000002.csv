@@ -1,0 +1,127 @@
+"0","```r
+
+sum(s_df$row_total)
+```"
+"1","[1] 30
+"
+"0","```r
+sum(m_df$row_total)
+```"
+"1","[1] 32
+"
+"0","```r
+colSums(table(s_df$survey_id,s_df$stay_time))
+```"
+"1","  0_2_min 12_15_min   3_7_min  8_12_min 
+        1        12         7         1 
+"
+"0","```r
+table(s_df$survey_id,s_df$stay_time)
+```"
+"1","            
+             0_2_min 12_15_min 3_7_min 8_12_min
+  2207111030       0         0       2        0
+  2207111230       0         7       1        0
+  2207111430       0         1       0        0
+  2207111630       0         3       1        0
+  2207131330       0         1       1        1
+  2207131530       1         0       1        0
+  2207131730       0         0       1        0
+"
+"0","```r
+colSums(table(m_df$survey_id,m_df$stay_time))
+```"
+"1","0_2_min 
+     20 
+"
+"0","```r
+table(m_df$survey_id,m_df$stay_time)
+```"
+"1","            
+             0_2_min
+  2207111030       3
+  2207111430       4
+  2207111630       3
+  2207131130       3
+  2207131330       1
+  2207131530       3
+  2207131730       3
+"
+"0","```r
+colSums(table(s_df$survey_id,s_df$posture))
+```"
+"1","       assis_banc assis_chaise-long            debout 
+               16                 2                 3 
+"
+"0","```r
+table(s_df$survey_id,s_df$posture)
+```"
+"1","            
+             assis_banc assis_chaise-long debout
+  2207111030          1                 0      1
+  2207111230          6                 2      0
+  2207111430          1                 0      0
+  2207111630          3                 0      1
+  2207131330          3                 0      0
+  2207131530          2                 0      0
+  2207131730          0                 0      1
+"
+"0","```r
+colSums(table(m_df$survey_id,m_df$posture))
+```"
+"1","debout 
+    20 
+"
+"0","```r
+table(m_df$survey_id,m_df$posture)
+```"
+"1","            
+             debout
+  2207111030      3
+  2207111430      4
+  2207111630      3
+  2207131130      3
+  2207131330      1
+  2207131530      3
+  2207131730      3
+"
+"0","```r
+colSums(table(s_df$survey_id,s_df$activity))
+```"
+"1","                  conversing    recreation_active-playing recreation_passive-observing   recreation_passive-resting 
+                           1                            1                            2                           13 
+                     waiting 
+                           4 
+"
+"0","```r
+table(s_df$survey_id,s_df$activity)
+```"
+"1","            
+             conversing recreation_active-playing recreation_passive-observing recreation_passive-resting waiting
+  2207111030          0                         0                            1                          1       0
+  2207111230          0                         0                            0                          7       1
+  2207111430          0                         0                            0                          1       0
+  2207111630          1                         1                            0                          1       1
+  2207131330          0                         0                            0                          2       1
+  2207131530          0                         0                            1                          1       0
+  2207131730          0                         0                            0                          0       1
+"
+"0","```r
+colSums(table(m_df$survey_id,m_df$activity))
+```"
+"1","walk 
+  20 
+"
+"0","```r
+table(m_df$survey_id,m_df$activity)
+```"
+"1","            
+             walk
+  2207111030    3
+  2207111430    4
+  2207111630    3
+  2207131130    3
+  2207131330    1
+  2207131530    3
+  2207131730    3
+"

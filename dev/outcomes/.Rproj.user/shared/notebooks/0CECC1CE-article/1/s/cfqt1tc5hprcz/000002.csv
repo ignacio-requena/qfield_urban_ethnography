@@ -1,0 +1,6 @@
+"0","```r
+ladefense_ctx <- read_sf(here(\"source\",\"geom\",\"defense_paris_2020_context.gpkg\"))
+
+```"
+"1","Warning: automatically selected the first layer in a data source containing more than one.
+"

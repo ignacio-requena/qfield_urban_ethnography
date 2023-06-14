@@ -1,0 +1,11 @@
+"0","```r
+s.source$timestamp <- gsub('T',' ',s.source$timestamp)
+s.source$timestamp <- substr(s.source$timestamp,start=1,stop=19)
+s.source$date <- format(as.POSIXct(strptime(s.source$timestamp,\"%Y-%m-%d\",tz=\"\")),format = \"%Y-%m-%d\") # separate date column
+s.source$time <- format(as.POSIXct(strptime(s.source$timestamp,\"%Y-%m-%d %H:%M:%S\",tz=\"\")) ,format = \"%H:%M:%S\") # separate time column
+
+m.source$timestamp <- gsub('T',' ',m.source$timestamp)
+m.source$timestamp <- substr(m.source$timestamp,start=1,stop=19)
+m.source$date <- format(as.POSIXct(strptime(m.source$timestamp,\"%Y-%m-%d\",tz=\"\")),format = \"%Y-%m-%d\") # separate date column
+m.source$time <- format(as.POSIXct(strptime(m.source$timestamp,\"%Y-%m-%d %H:%M:%S\",tz=\"\")) ,format = \"%H:%M:%S\") # separate time column
+```"

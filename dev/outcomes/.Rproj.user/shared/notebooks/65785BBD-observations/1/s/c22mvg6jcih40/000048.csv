@@ -1,0 +1,4 @@
+"0",""
+"0","basemap <- raster(here(""source"",""geom"",""basemap.tif""))"
+"2","Warning: [minmax] min and max values not available for all layers. See 'setMinMax' or 'global'"
+"0","plot(basemap)"

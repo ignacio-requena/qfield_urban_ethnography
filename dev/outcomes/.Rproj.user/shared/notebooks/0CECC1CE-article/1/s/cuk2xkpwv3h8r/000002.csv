@@ -1,0 +1,44 @@
+"0","```r
+
+df_bcs %>%
+  group_by(site,fileid) %>%
+    summarise(
+      length = max(curv_absc),
+      date = first(date),
+      start = first(time),
+      end = last(time),
+      time = as.numeric(last(time)-first(time)),
+      speed = mean(length/time, na.rm = TRUE),
+      Tair_mean = mean(mf_tair,na.rm=TRUE),
+      Tair_sd = sd(mf_tair,na.rm=TRUE),
+      Tair_max = max(mf_tair,na.rm=TRUE),
+      Tair_min = min(mf_tair,na.rm=TRUE),
+      Rh_mean = mean(mf_rh,na.rm=TRUE),
+      Rh_sd = sd(mf_rh,na.rm=TRUE),
+      Ws_mean = mean(mf_ws, na.rm=TRUE),
+      Ws_sd = sd(mf_ws, na.rm=TRUE),
+      Sr_mean = mean(mf_sr,na.rm=TRUE),
+      Sr_sd = sd(mf_sr, na.rm=TRUE)) %>%
+  mutate_if(is.numeric, round, digits=2) %>%
+  group_by(site,date) %>%
+    summarise(
+      length = round(max(length),digits = 1),
+      laps = n_distinct(fileid),
+      time_window = paste0(substr(first(start),start = 1,stop = 5),\" - \",substr(last(end),start = 1,stop = 5)),
+      time_span = paste0(round(mean(time), digits = 0),\" (±\",round(sd(time), digits = 0),\")\"),
+      speed = round(mean(speed, na.rm = TRUE), digits = 2),
+      Tair_mean = paste0(round(mean(Tair_mean,na.rm=TRUE), digits = 2),\" (±\",round(mean(Tair_sd,na.rm=TRUE), digits = 2),\")\"),
+      Tair_range = paste0(round(min(Tair_min,na.rm=TRUE), digits = 2),\" - \",round(max(Tair_max,na.rm=TRUE), digits = 2)),
+      #Rh_mean = paste0(round(mean(Rh_mean,na.rm=TRUE), digits = 2),\" (±\",round(mean(Rh_sd,na.rm=TRUE), digits = 2),\")\"),
+      Ws_mean = paste0(round(mean(Ws_mean, na.rm=TRUE), digits = 2),\" (±\",round(mean(Ws_sd, na.rm=TRUE), digits = 2),\")\"),
+      Sr_mean = paste0(round(mean(Sr_mean,na.rm=TRUE), digits = 2),\" (±\",round(mean(Sr_sd, na.rm=TRUE), digits = 2),\")\")
+    ) %>%
+  relocate(length, .after = site) %>%
+  kable(
+    format = \"markdown\",
+    align=rep('c', 5),
+    caption = \"Summary of measurement campaigns.\") %>%
+  writeLines(here(\"outcomes\",\"tbl-bcs-summary.md\"))
+```"
+"1","`summarise()` has grouped output by 'site'. You can override using the `.groups` argument.`mutate_if()` ignored the following grouping variables:`summarise()` has grouped output by 'site'. You can override using the `.groups` argument.
+"

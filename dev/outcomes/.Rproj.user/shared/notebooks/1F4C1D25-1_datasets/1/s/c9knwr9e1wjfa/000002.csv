@@ -1,0 +1,53 @@
+"0","```r
+library(readr)
+library(dplyr)
+library(tidyr)
+library(sf)
+library(tidyverse)
+
+root <- getwd()
+setwd(file.path(root,\"0_source\"))
+```"
+"1","Warning: The working directory was changed to /Users/irequena/Documents/GitHub/nm-ilots-frais/data-analysis/observations/gare/0_source inside a notebook chunk. The working directory will be reset when the chunk is finished running. Use the knitr root.dir option in the setup chunk to change the working directory for notebook chunks.
+"
+"0","```r
+s.source <- read_sf(\"staying_22-07.shp\")
+s.source <- select(s.source, -Photo, -size, -descrip, -thermogra, -video, -survey, -interview, -layer, -row)
+s.source <- s.source %>% 
+  rename(
+    gender_male = genre_male,
+    gender_female = genre_fema,
+    age_0_7 =   `age_0.7`,
+    age_8_17 = `age_8.17`,
+    age_18_34 = `age_18.34`,
+    age_35_50 = `age_35.50`,
+    age_51_64 = `age_51.64`,
+    age_65 = `age_65.`,
+    stay_time = stay.time
+    )
+
+m.source <- read_sf(\"moving_22-07.shp\")
+m.source <- select(m.source, -Photo, -Direction, -descrip, -thermograp, -video, -survey, -interview, -layer, -area, -Jour, -row)
+m.source <- m.source %>% 
+  rename(
+    gender_male = genre_male,
+    gender_female = genre_fema,
+    age_0_7 = age_0.7,
+    age_8_17 = age_8.17,
+    age_18_34 = age_18.34,
+    age_35_50 = age_35.50,
+    age_51_64 = age_51.64,
+    age_65 = age_65.
+    )
+m.source$engagement <- as.numeric(m.source$engagement)
+m.source$engagement[is.na(m.source$engagement)] <- 0
+m.source$age_0_7[is.na(m.source$age_0_7)] <- 0
+m.source$age_8_17[is.na(m.source$age_8_17)] <- 0
+m.source$age_18_34[is.na(m.source$age_18_34)] <- 0
+m.source$age_35_50[is.na(m.source$age_35_50)] <- 0
+m.source$age_51_64[is.na(m.source$age_51_64)] <- 0
+m.source$age_65[is.na(m.source$age_65)] <- 0
+m.source$gender_male[is.na(m.source$gender_male)] <- 0
+m.source$gender_female[is.na(m.source$gender_female)] <- 0
+
+```"

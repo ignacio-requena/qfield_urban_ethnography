@@ -1,0 +1,54 @@
+"0","```r
+
+# mean moving speed value
+speed_mov = as.numeric(
+  df_speed %>%
+  filter(is.na(TagName)) %>%
+  filter(speed_inst != 0) %>%
+  group_by(fileid) %>%
+  summarise(
+    site = first(site),
+    start = first(timestamp),
+    end = last(timestamp),
+    time = round(as.numeric(end-start)*60, digits = 0),
+    speed = mean(speed_inst) 
+    ) %>%
+  summarise(
+    speed_mean = mean(speed)
+  )
+)
+
+#calculate mean speed by lap
+df_speed %>%
+  group_by(fileid) %>%
+  summarise(
+    site = first(site),
+    start = first(timestamp),
+    end = last(timestamp),
+    time = round(as.numeric(end-start)*60, digits = 0),
+    speed = mean(speed_inst, na.rm = T) 
+    ) %>%
+  group_by(site) %>%
+  summarise(
+    time_mean = mean(time),
+    time_sd = sd(time),
+    speed_mean = mean(speed),
+    speed_sd = sd(speed)
+  ) %>%
+  mutate_if(is.numeric, round, digits=2) %>%
+  summarise(
+    site = site,
+    time = paste0(time_mean,\" (\",time_sd,\")\"),
+    speed = paste0(speed_mean,\" (\",speed_sd,\")\")
+  ) %>%
+  kable(
+    format = \"markdown\",
+    caption = \"Mobile station mean speed per site.\",
+    align = \"lrr\"
+    ) %>%
+  writeLines(here(\"outcomes\",\"tbl-rt-speed.md\"))
+
+
+
+
+```"

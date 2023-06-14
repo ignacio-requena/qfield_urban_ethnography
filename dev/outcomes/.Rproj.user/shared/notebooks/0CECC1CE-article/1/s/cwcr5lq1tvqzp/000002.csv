@@ -1,0 +1,21 @@
+"0","```r
+
+df_raw$geometry = str_sub(df_raw$geometry,8,nchar(df_raw$geometry)-1)
+df_raw_xy_2154 = str_split_fixed(df_raw$geometry, \" \", 2)
+df_raw$X_2154 = df_raw_xy_2154[,1]
+df_raw$Y_2154 = df_raw_xy_2154[,2]
+
+df_raw = df_raw %>%
+  drop_na(geometry) %>%
+  st_as_sf(coords = c(\"X_2154\", \"Y_2154\"), crs = 2154,remove = FALSE,agr = \"constant\")
+df_raw_4326 <- st_transform(df_raw, 4326) #conversion of Lambert93
+df_raw_4326 <- st_coordinates(df_raw_4326) #extracting X and Y coordinates from geometry
+df_raw$X_4326 <- df_raw_4326[,1]
+df_raw$Y_4326 <- df_raw_4326[,2]
+
+df_raw = st_drop_geometry(df_raw)
+
+rm(df_raw_4326)
+rm(df_raw_xy_2154)
+
+```"

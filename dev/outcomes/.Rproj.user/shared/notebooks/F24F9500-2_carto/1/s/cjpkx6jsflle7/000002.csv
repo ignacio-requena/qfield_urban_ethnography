@@ -1,0 +1,40 @@
+"0","```r
+
+var <- colnames(s_df[,c(21,25,27)])
+var <- var[-4]
+
+for (i in var) {
+
+plot =
+ggplot() +
+  geom_sf(data=build, color = gray(0.5),size = 0.4)+
+  geom_sf(data=sidewalk, color = gray(0.5),size = 0.15)+
+  geom_sf(data=device, color = \"black\",size = 0.1, fill = NA)+
+  geom_sf(data=s_df, aes_string(colour=i), size = s_df$row_total*1.2, alpha = 0.4)+
+  geom_sf(data=m_df, aes_string(colour=i), size = m_df$row_total*0.5, alpha = 0.4)+
+  xlim(bbox_2[[\"xmin\"]],bbox_2[[\"xmax\"]])+
+  ylim(bbox_2[[\"ymin\"]],bbox_2[[\"ymax\"]])+
+  theme_carto +
+  theme(legend.position=\"right\",
+        legend.direction = \"vertical\",
+        legend.title = element_blank(),
+        legend.text = element_text(size=8))
+
+  assign(paste0(\"plot_use_\",i),plot)
+
+}
+
+plot_act = plot_grid(plot_use_stay_time,plot_use_posture,plot_use_activity,
+          align = \"v\",
+          ncol = 1,
+          labels = \"auto\"
+          )
+ggdraw(add_sub(plot_act,
+        \"(a) temps de séjour ; (b) posture des citadins ; (c) activités\",
+        x = 0, hjust = 0,
+        size = 10
+        ))
+
+ggsave(here(\"2_carto\",paste0(sitename,\"_plot_use_2.jpeg\")), width = 16, height = 25, unit = \"cm\")
+
+```"

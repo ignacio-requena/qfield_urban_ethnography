@@ -1,0 +1,148 @@
+"0","```r
+
+# TABLE
+df_bcs %>%
+  group_by(site,fileid) %>%
+  arrange(timestamp) %>%
+  summarise(
+      date = first(date),
+      start = first(time),
+      time = as.numeric(last(time)-first(time)),
+      #length = max(curv_absc),
+      #speed = mean(speed, na.rm = TRUE),
+      #n = n(),
+      Tair_mean = mean(mf_tair,na.rm=TRUE),
+      Tair_sd = sd(mf_tair,na.rm=TRUE),
+      #Tair_max = max(mf_tair,na.rm=TRUE),
+      #Tair_min = min(mf_tair,na.rm=TRUE),
+      Rh_mean = mean(mf_rh,na.rm=TRUE),
+      Rh_sd = sd(mf_rh,na.rm=TRUE),
+      #Rh_max = max(mf_rh,na.rm=TRUE),
+      #Rh_min = min(mf_rh,na.rm=TRUE),
+      Sr_mean = mean(mf_sr,na.rm=TRUE),
+      Sr_sd = sd(mf_sr, na.rm=TRUE),
+      #Sr_max = max(mf_sr,na.rm=TRUE),
+      #Sr_min = min(mf_sr, na.rm=TRUE),
+      Ws_mean = mean(mf_ws, na.rm=TRUE),
+      Ws_sd = sd(mf_ws, na.rm=TRUE)
+      ) %>%
+  mutate_if(is.numeric, round, digits=2) %>%
+  arrange(date) %>%
+  group_by(site) %>% mutate(lap = row_number()) %>%
+  mutate(start = substr(start,start = 1, stop = 5)) %>%
+  mutate(
+    Tair = paste0(Tair_mean,\" (±\",Tair_sd,\")\"),
+    Rh = paste0(Rh_mean,\" (±\",Rh_sd,\")\"),
+    Sr = paste0(Sr_mean,\" (±\",Sr_sd,\")\"),
+    Ws = paste0(Ws_mean,\" (±\",Ws_sd,\")\")) %>%
+  select(site,lap,date,start,time,Tair,Rh,Ws,Sr) %>%
+  kable(
+    format = \"markdown\",
+    col.names = c(\"Site\",\"Lap\",\"Date\",\"Time\",\"Length\",\"Tair\",\"Rh\",\"Sr\",\"Ws\"),
+    caption = \"Meteo France mesurements means and SD during each lap of mobile measurements.Air temperature (Tair), Relative humidity (Rh), Shortwave radiation (Sr) and Wind speed (Ws).\",
+    align = \"lcccccccc\"
+    ) %>%
+  writeLines(here(\"outcomes\",\"tbl-bcs-lap.md\"))
+```"
+"1","`summarise()` has grouped output by 'site'. You can override using the `.groups` argument.`mutate_if()` ignored the following grouping variables:
+"
+"0","```r
+  
+  #mutate(
+  #  site = ifelse(site == 'graslin',\"PGR\",
+  #          ifelse(site == 'jardinextra',\"MQG\",
+  #            ifelse(site == 'ladefense',\"LDP\",
+  #              ifelse(site == 'quaiplantes',\"QPL\",
+  #                NA))))) %>%
+  
+
+
+
+# PLOT all
+df_plot = df_bcs %>%
+  mutate(site = paste0(year(timestamp),\"_\",site)) %>%
+  group_by(site,fileid) %>%
+    summarise(
+      site = first(site),
+      time = as.numeric(last(time)-first(time)),
+      Tair_d = max(mf_tair,na.rm=TRUE)-min(mf_tair,na.rm=TRUE),
+      Rh_d = max(mf_rh,na.rm=TRUE)-min(mf_rh,na.rm=TRUE),
+      Sr_d = max(mf_sr,na.rm=TRUE)-min(mf_sr,na.rm=TRUE),
+      Ws_d = (max(mf_ws, na.rm=TRUE)-min(mf_ws, na.rm=TRUE)),
+      )
+```"
+"1","`summarise()` has grouped output by 'site'. You can override using the `.groups` argument.
+"
+"0","```r
+mean(df_plot$Tair_delta)
+```"
+"1","Warning: Unknown or uninitialised column: `Tair_delta`.Warning: argument is not numeric or logical: returning NA
+"
+"1","[1] NA
+"
+"0","```r
+mean(df_plot$Rh_delta)
+```"
+"1","Warning: Unknown or uninitialised column: `Rh_delta`.Warning: argument is not numeric or logical: returning NA
+"
+"1","[1] NA
+"
+"0","```r
+mean(df_plot$Ws_delta)
+```"
+"1","Warning: Unknown or uninitialised column: `Ws_delta`.Warning: argument is not numeric or logical: returning NA
+"
+"1","[1] NA
+"
+"0","```r
+mean(df_plot$Sr_delta)
+```"
+"1","Warning: Unknown or uninitialised column: `Sr_delta`.Warning: argument is not numeric or logical: returning NA
+"
+"1","[1] NA
+"
+"0","```r
+#plot    
+theme_bp <- theme_linedraw()+
+  theme(plot.title = element_text(size=10),
+        axis.text.x = element_text(angle = 90, size = 6),
+        axis.title.x = element_blank(),
+        legend.position = \"none\"
+        )
+
+vars = c(\"Tair_d\",\"Rh_d\",\"Sr_d\",\"Ws_d\")
+
+for (i in vars) {
+
+h = mean(df_plot[[i]])
+  
+bp = 
+  df_plot %>%
+  ggplot(aes_string(x=\"site\", y=i)) +
+    geom_boxplot() +
+    geom_jitter(aes(colour = time), size=1) +
+    scale_colour_gradient(low = \"yellow\", high = \"blue\", na.value = NA) +
+    stat_boxplot(geom ='errorbar', width = 0.3) +
+    geom_hline(yintercept=h,linetype=\"dashed\", color = \"red\")+
+    geom_text(aes_string(x = 0.8, y = h,label=round(h, digits = 2)),color = \"red\", vjust = -1)+
+    #ylim(0,0.75) +
+    #labs(y = \"Tair (°C)\") +
+    theme_bp
+
+assign(paste0(\"bp_\",i),bp)
+
+rm(bp)
+rm(h)
+
+}
+```"
+"1","Warning: `aes_string()` was deprecated in ggplot2 3.0.0.
+Please use tidy evaluation ideoms with `aes()`
+"
+"0","```r
+ggpubr::ggarrange(
+  bp_Tair_d,bp_Rh_d,bp_Sr_d,bp_Ws_d,
+  nrow = 1,
+  common.legend = TRUE
+)
+```"

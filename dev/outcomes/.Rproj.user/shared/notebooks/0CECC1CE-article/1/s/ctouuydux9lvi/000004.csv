@@ -1,0 +1,29 @@
+"0","```r
+
+
+# plot per device
+df_metrics %>%
+  filter(!is.na(device)) %>%
+  filter(!is.na(PET_delta_class)) %>%
+  mutate(
+    device = paste0(site,\"_\",device)
+  ) %>%
+  distinct(curv_absc, .keep_all = TRUE) %>%
+  ggplot()+
+  geom_point(aes(x = PET_delta_ent, y = PET_delta_lea, color = T_mrt),alpha = 0.3)+
+  scale_colour_gradientn(colours = sequential_hcl(11,\"Heat 2\"))+
+  geom_density2d(aes(x = PET_delta_ent, y = PET_delta_lea), bins = 50, alpha = 0.2, color = \"black\")+
+  #geom_smooth(aes(x = pet_delta_ent, y = pet_delta_lea),method=lm, se=FALSE, color = \"black\",linetype = \"longdash\", alpha = 0.5)+
+  #stat_ellipse(aes(x = pet_delta_ent, y = pet_delta_lea),color = \"black\",linetype = \"longdash\", alpha = 0.5)+
+  annotate(\"rect\",xmin = xmin, xmax = 0, ymin = 0, ymax = ymax,alpha = .2,color = \"cadetblue2\", fill = NA, linetype = \"dotted\")+ 
+  annotate(\"rect\",xmin = xmin, xmax = 0, ymin = ymin, ymax = 0,alpha = .2,color = \"blue2\", fill = NA, linetype = \"dotted\")+
+  annotate(\"rect\",xmin = 0, xmax = xmax, ymin = ymin, ymax = 0,alpha = .2,color = \"red1\", fill = NA, linetype = \"dotted\")+
+  annotate(\"rect\",xmin = 0, xmax = xmax, ymin = 0, ymax = ymax,alpha = .2,color = \"red4\", fill = NA, linetype = \"dotted\")+
+  xlab(\"D_enter\") +
+  ylab(\"D_leave\") +
+  theme_linedraw()+
+  facet_wrap(~ device, ncol=3)
+
+ggsave(here(\"outcomes\",\"fig-exp-diversity-device.jpg\"), width = 20, height = 20, unit = \"cm\")
+
+```"

@@ -1,0 +1,16 @@
+"0","```r
+
+#plot per track
+df_metrics %>%
+  ggplot() +
+  geom_point(aes(x = time_prc, y = PET_cm, color=device))+
+  geom_point(aes(x = time_prc, y = PET, color=device), alpha = 0.2, size = 0.2)+
+  #geom_line(aes(x = time_rel, y = device,color = device), show_guide = FALSE)
+  #geom_point(aes(x = time_rel, y = pet, color=sr_up))+
+  #theme(legend.position = \"bottom\")+
+  #facet_grid(rows=vars(fileid),cols=vars(site))
+  theme_linedraw()+
+  facet_wrap(~fileid)
+
+ggsave(here(\"outcomes\",\"fig-exp-memory-lap.jpg\"),width = 12,height = 12)
+```"

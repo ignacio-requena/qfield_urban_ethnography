@@ -1,0 +1,13 @@
+"0","```r
+
+# global measurement speed per site
+df_speed %>%
+  group_by(site) %>%
+  summarise(
+    site = first(site),
+    start = first(timestamp),
+    end = last(timestamp),
+    time = round(as.numeric(end-start)*60, digits = 0),
+    speed_glo = mean(speed_inst, na.rm=T),
+    )
+```"

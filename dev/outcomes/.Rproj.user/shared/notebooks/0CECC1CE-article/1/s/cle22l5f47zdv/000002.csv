@@ -1,0 +1,12 @@
+"0","```r
+
+df_raw$timestamp <- as.POSIXct(df_raw$timestamp,format=\"%Y-%m-%d %H:%M:%S\")
+
+df_raw$date <- substr(df_raw$timestamp,start = 0, stop = 11)
+df_raw$date <- as.POSIXct(df_raw$date, format =\"%Y-%m-%d\",tz=\"\")
+df_raw$time <- as_hms(format(as.POSIXlt(df_raw$timestamp,format=\"%Y-%m-%d %H:%M:%S\",tz=\"\"), \"%H:%M:%S\"))
+
+#strptime(format(as.POSIXct(df_raw$timestamp,format=\"%Y-%m-%d %H:%M:%S\"),\"%H:%M:%S\"), format = \"%H:%M:%S\") # separate time column
+
+
+```"

@@ -1,0 +1,16 @@
+"0","```r
+sitename = \"reze\"
+
+s_df <- read_sf(here(\"1_dataset\",\"s_df.gpkg\"))
+s_df$posture[s_df$posture == \"2\"] <- \"assis_chaise-long\"
+s_df$posture[s_df$posture == \"4\"] <- \"assis_banc\"
+s_df$posture[s_df$posture == \"6\"] <- \"debout\"
+s_df$stay_time[s_df$stay_time == \"break\"] <- \"8_12_min\"
+s_df$stay_time[s_df$stay_time == \"brief\"] <- \"3_7_min\"
+s_df$stay_time[s_df$stay_time == \"long\"] <- \"12_15_min\"
+s_df$stay_time[s_df$stay_time == \"short\"] <- \"0_2_min\"
+#s_df <- st_buffer(s_df, dist = s_df$row_total*0.4) #assumes 1 people = 1,0m wide
+plot(s_df)
+```"
+"1","Warning: plotting the first 9 out of 27 attributes; use max.plot = 27 to plot all
+"

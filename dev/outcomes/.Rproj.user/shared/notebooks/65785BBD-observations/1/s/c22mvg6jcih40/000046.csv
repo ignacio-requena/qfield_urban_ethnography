@@ -1,0 +1,2 @@
+"0","boundary = read_sf(here(""source"",""geom"",""context.gpkg""),""perimetre"") %>% slice(1)"
+"0","plot(boundary)"

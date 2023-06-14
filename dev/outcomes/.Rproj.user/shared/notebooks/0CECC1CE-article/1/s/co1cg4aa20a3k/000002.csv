@@ -1,0 +1,16 @@
+"0","```r
+
+df_bcs = 
+  df_raw %>%
+    dplyr::select(site,fileid,timestamp,date,time,curv_absc,TagName,AirTC_Avg,RH_Avg,WS_ms_Avg,SR01Up_1_Avg,tair,hr,ws,sr) %>%
+  rename(
+    cs_tair = AirTC_Avg,
+    cs_ws = WS_ms_Avg,
+    cs_sr = SR01Up_1_Avg,
+    mf_tair = tair,
+    mf_rh = hr,
+    mf_ws = ws,
+    mf_sr = sr)
+
+
+```"

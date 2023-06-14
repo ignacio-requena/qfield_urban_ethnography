@@ -1,0 +1,100 @@
+"0","```r
+
+# summary table per site
+df_metrics %>%
+  group_by(site) %>%
+  summarise(
+    AirTC_Avg = mean(AirTC_Avg),
+    RH_Avg = mean(RH_Avg),
+    WS_ms_Avg = mean(WS_ms_Avg),
+    SR01Up_1_Avg = mean(SR01Up_1_Avg),
+    T_mrt = round(mean(T_mrt), digits = 1),
+    PET_inst = mean(PET),
+    PET_cm = mean(PET_cm),
+    PET_diff = paste0(round(mean(PET_cm_diff), digits = 1),\" (±\",round(sd(PET_cm_diff, na.rm = TRUE), digits = 1),\")\"),
+    PET_diff_fresh_perc = 100*sum(ifelse(PET_cm_diff < 0,1,0))/n(),
+    PET_diff_hot_perc = 100*sum(ifelse(PET_cm_diff >= 0,1,0))/n()
+  ) %>%
+  mutate_if(is.numeric, round, digits=1) %>%
+  kable(
+    format = \"markdown\",
+    col.names = c(\"site\",\"Tair\",\"RH\",\"WS\",\"SRup\",\"MRT\",\"PETinst\",\"PETcm\",\"mean diff\",\"% diff fresh\", \"% diff hot\"),
+    align = \"lcccccccccc\",
+    caption = \"Summary table per site.\") %>%
+  writeLines(here(\"outcomes\",\"tbl-exp-memory-site.md\"))
+
+# Summary table per device
+df_metrics %>%
+  filter(!is.na(df_metrics$device)) %>%
+  filter(device != \"open\") %>%
+  group_by(site,device) %>%
+  summarise(
+    AirTC_Avg = mean(AirTC_Avg),
+    RH_Avg = mean(RH_Avg),
+    WS_ms_Avg = mean(WS_ms_Avg),
+    SR01Up_1_Avg = mean(SR01Up_1_Avg),
+    T_mrt = round(mean(T_mrt), digits = 1),
+    PET_inst = mean(PET),
+    PET_cm = mean(PET_cm),
+    PET_diff = paste0(round(mean(PET_cm_diff), digits = 1),\" (±\",round(sd(PET_cm_diff, na.rm = TRUE), digits = 1),\")\"),
+    PET_diff_fresh_perc = 100*sum(ifelse(PET_cm_diff < 0,1,0))/n(),
+    PET_diff_hot_perc = 100*sum(ifelse(PET_cm_diff >= 0,1,0))/n()
+  ) %>%
+  mutate_if(is.numeric, round, digits=1) %>%
+  kable(
+    format = \"markdown\",
+    col.names = c(\"site\",\"device\",\"Tair\",\"RH\",\"WS\",\"SRup\",\"MRT\",\"PETinst\",\"PETcm\",\"mean diff\",\"% diff fresh\", \"% diff hot\"),
+    align = \"lccccccccccc\",
+    caption = \"Summary table per device.\") %>%
+  writeLines(here(\"outcomes\",\"tbl-exp-memory-device.md\"))
+```"
+"1","`summarise()` has grouped output by 'site'. You can override using the `.groups` argument.`mutate_if()` ignored the following grouping variables:
+"
+"0","```r
+# correlations of delta instant PET and cumulative mean PET with measured parameters
+df_metrics %>%
+  select(
+    #fileid, site,track, device, 
+    PET_cm_diff,
+    AirTC_Avg,`Temp_C_Avg(1)`,`Temp_C_Avg(2)`,RH_Avg,WS_ms_Avg,
+    SR01Up_1_Avg,IR01UpCo_1_Avg,
+    SR01Up_2_Avg,IR01UpCo_2_Avg,
+    SR01Up_3_Avg,IR01UpCo_3_Avg
+    ) %>%
+  cor()
+```"
+"1","               PET_cm_diff   AirTC_Avg Temp_C_Avg(1) Temp_C_Avg(2)       RH_Avg   WS_ms_Avg SR01Up_1_Avg IR01UpCo_1_Avg SR01Up_2_Avg
+PET_cm_diff     1.00000000 -0.09533675    0.46754990    0.22972093  0.030863148 -0.21651445   0.49428424   -0.296139034   0.48863327
+AirTC_Avg      -0.09533675  1.00000000    0.55642665    0.81501331 -0.379688283 -0.01202292  -0.27944647    0.337613114  -0.30461546
+Temp_C_Avg(1)   0.46754990  0.55642665    1.00000000    0.80695445 -0.243352078 -0.08389882   0.28284532    0.024235847   0.23075497
+Temp_C_Avg(2)   0.22972093  0.81501331    0.80695445    1.00000000 -0.347887693 -0.13861898  -0.08367397    0.254190619  -0.04761036
+RH_Avg          0.03086315 -0.37968828   -0.24335208   -0.34788769  1.000000000  0.07444882   0.10359652    0.005922054   0.01724089
+WS_ms_Avg      -0.21651445 -0.01202292   -0.08389882   -0.13861898  0.074448819  1.00000000   0.11100009   -0.171283136  -0.04412211
+SR01Up_1_Avg    0.49428424 -0.27944647    0.28284532   -0.08367397  0.103596520  0.11100009   1.00000000   -0.619685772   0.63006542
+IR01UpCo_1_Avg -0.29613903  0.33761311    0.02423585    0.25419062  0.005922054 -0.17128314  -0.61968577    1.000000000  -0.35814897
+SR01Up_2_Avg    0.48863327 -0.30461546    0.23075497   -0.04761036  0.017240890 -0.04412211   0.63006542   -0.358148975   1.00000000
+IR01UpCo_2_Avg  0.34194025  0.49496447    0.65843115    0.58313573  0.033331525  0.10902773   0.22787978    0.094992111  -0.05106527
+SR01Up_3_Avg    0.43826193 -0.12179691    0.33454139    0.14474452  0.139775731  0.13648804   0.61020252   -0.354578564   0.36550309
+IR01UpCo_3_Avg  0.33804018  0.53666919    0.68715551    0.60641293 -0.028230218  0.01051036   0.22613955    0.161950283   0.08727288
+               IR01UpCo_2_Avg SR01Up_3_Avg IR01UpCo_3_Avg
+PET_cm_diff        0.34194025    0.4382619     0.33804018
+AirTC_Avg          0.49496447   -0.1217969     0.53666919
+Temp_C_Avg(1)      0.65843115    0.3345414     0.68715551
+Temp_C_Avg(2)      0.58313573    0.1447445     0.60641293
+RH_Avg             0.03333153    0.1397757    -0.02823022
+WS_ms_Avg          0.10902773    0.1364880     0.01051036
+SR01Up_1_Avg       0.22787978    0.6102025     0.22613955
+IR01UpCo_1_Avg     0.09499211   -0.3545786     0.16195028
+SR01Up_2_Avg      -0.05106527    0.3655031     0.08727288
+IR01UpCo_2_Avg     1.00000000    0.3074550     0.85248246
+SR01Up_3_Avg       0.30745504    1.0000000     0.18379092
+IR01UpCo_3_Avg     0.85248246    0.1837909     1.00000000
+"
+"0","```r
+# plot to analyse diferences of both PET
+df_metrics %>%
+  ggplot() +
+  geom_bar(aes(x=PET_class), position = \"stack\", color = \"blue\", fill = NA)+
+  geom_bar(aes(x=PET_cm_class), position = \"stack\", color = \"red\", fill = NA)+
+  facet_wrap(\"site\")
+```"

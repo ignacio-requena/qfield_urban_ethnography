@@ -1,0 +1,263 @@
+"0","```r
+
+#data import
+library(here)
+```"
+"1","here() starts at /Users/irequena/Documents/GitHub/coolscapes/article/scripts
+"
+"0","```r
+library(readxl)
+library(readr)
+
+#data mining
+library(dplyr)
+```"
+"1","
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+"
+"0","```r
+library(tidyverse)
+```"
+"1","Registered S3 methods overwritten by 'dbplyr':
+  method         from
+  print.tbl_lazy     
+  print.tbl_sql      
+── Attaching packages ───────────────────────────────────────────────────────────────────────────────────────── tidyverse 1.3.2 ──✔ ggplot2 3.4.0     ✔ purrr   0.3.5
+✔ tibble  3.1.8     ✔ stringr 1.5.0
+✔ tidyr   1.2.1     ✔ forcats 0.5.2── Conflicts ──────────────────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+"
+"0","```r
+#time operations
+library(lubridate)
+```"
+"1","Loading required package: timechange
+
+Attaching package: ‘lubridate’
+
+The following objects are masked from ‘package:base’:
+
+    date, intersect, setdiff, union
+"
+"0","```r
+library(hms)
+```"
+"1","
+Attaching package: ‘hms’
+
+The following object is masked from ‘package:lubridate’:
+
+    hms
+"
+"0","```r
+library(janitor)
+```"
+"1","
+Attaching package: ‘janitor’
+
+The following objects are masked from ‘package:stats’:
+
+    chisq.test, fisher.test
+"
+"0","```r
+library(anytime)
+
+
+library(zoo)
+```"
+"1","
+Attaching package: ‘zoo’
+
+The following objects are masked from ‘package:base’:
+
+    as.Date, as.Date.numeric
+"
+"0","```r
+library(jsonlite)
+```"
+"1","
+Attaching package: ‘jsonlite’
+
+The following object is masked from ‘package:purrr’:
+
+    flatten
+"
+"0","```r
+library(stringr) 
+library(egg)
+```"
+"1","Loading required package: gridExtra
+
+Attaching package: ‘gridExtra’
+
+The following object is masked from ‘package:dplyr’:
+
+    combine
+"
+"0","```r
+library(pander)
+library(vtable)
+```"
+"1","Loading required package: kableExtra
+
+Attaching package: ‘kableExtra’
+
+The following object is masked from ‘package:dplyr’:
+
+    group_rows
+"
+"0","```r
+library(data.table)
+```"
+"1","data.table 1.14.6 using 1 threads (see ?getDTthreads).  Latest news: r-datatable.com
+**********
+This installation of data.table has not detected OpenMP support. It should still work but in single-threaded mode.
+This is a Mac. Please read https://mac.r-project.org/openmp/. Please engage with Apple and ask them for support. Check r-datatable.com for updates, and our Mac instructions here: https://github.com/Rdatatable/data.table/wiki/Installation. After several years of many reports of installation problems on Mac, it's time to gingerly point out that there have been no similar problems on Windows or Linux.
+**********
+
+Attaching package: ‘data.table’
+
+The following objects are masked from ‘package:lubridate’:
+
+    hour, isoweek, mday, minute, month, quarter, second, wday, week, yday, year
+
+The following object is masked from ‘package:purrr’:
+
+    transpose
+
+The following objects are masked from ‘package:dplyr’:
+
+    between, first, last
+"
+"0","```r
+library(gdata)
+```"
+"1","gdata: read.xls support for 'XLS' (Excel 97-2004) files ENABLED.
+
+gdata: read.xls support for 'XLSX' (Excel 2007+) files ENABLED.
+
+Attaching package: ‘gdata’
+
+The following objects are masked from ‘package:data.table’:
+
+    first, last
+
+The following object is masked from ‘package:gridExtra’:
+
+    combine
+
+The following object is masked from ‘package:purrr’:
+
+    keep
+
+The following objects are masked from ‘package:dplyr’:
+
+    combine, first, last
+
+The following object is masked from ‘package:stats’:
+
+    nobs
+
+The following object is masked from ‘package:utils’:
+
+    object.size
+
+The following object is masked from ‘package:base’:
+
+    startsWith
+"
+"0","```r
+library(scorepeak)
+library(qwraps2)
+```"
+"1","
+Attaching package: ‘qwraps2’
+
+The following object is masked from ‘package:gdata’:
+
+    ll
+"
+"0","```r
+#geospatial
+library(sf)
+```"
+"1","Linking to GEOS 3.11.0, GDAL 3.5.3, PROJ 9.1.0; sf_use_s2() is TRUE
+"
+"0","```r
+# Plot libraries
+library(ggplot2)
+library(ggforce)
+library(ggmap)
+```"
+"1","ℹ Google's Terms of Service: ]8;;https://mapsplatform.google.com<https://mapsplatform.google.com>]8;;
+ℹ Please cite ggmap if you use it! Use `citation(\"ggmap\")` for details.
+"
+"0","```r
+library(ggpubr)
+```"
+"1","
+Attaching package: ‘ggpubr’
+
+The following objects are masked from ‘package:qwraps2’:
+
+    mean_ci, mean_sd, median_iqr
+
+The following object is masked from ‘package:egg’:
+
+    ggarrange
+"
+"0","```r
+library(ggforce)
+library(RColorBrewer)
+library(colorspace)
+library(cowplot)
+```"
+"1","
+Attaching package: ‘cowplot’
+
+The following object is masked from ‘package:ggpubr’:
+
+    get_legend
+
+The following object is masked from ‘package:ggmap’:
+
+    theme_nothing
+
+The following object is masked from ‘package:lubridate’:
+
+    stamp
+"
+"0","```r
+library(plotly)
+```"
+"1","Registered S3 method overwritten by 'htmlwidgets':
+  method           from         
+  print.htmlwidget tools:rstudio
+
+Attaching package: ‘plotly’
+
+The following object is masked from ‘package:ggmap’:
+
+    wind
+
+The following object is masked from ‘package:ggplot2’:
+
+    last_plot
+
+The following object is masked from ‘package:stats’:
+
+    filter
+
+The following object is masked from ‘package:graphics’:
+
+    layout
+"

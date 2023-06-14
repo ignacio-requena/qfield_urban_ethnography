@@ -1,0 +1,33 @@
+"0","```r
+for (i in sites) {
+
+hexbin_agr %>%
+  filter(site == i ) %>%
+  filter(cv_class == \"top25\") %>%
+  group_by(id) %>%
+  summarise(
+    n = n()
+  ) %>%
+  mutate(
+    n = ifelse(n <= 2, \"0_2\",
+        ifelse(n >= 3, \"3_10\", NA
+           ))) %>%  
+  tabyl(n) %>%
+  print()  
+  
+}
+
+```"
+"1","    n n_n   percent
+  0_2  38 0.7755102
+ 3_10  11 0.2244898
+    n n_n percent
+  0_2  21     0.7
+ 3_10   9     0.3
+    n n_n percent
+  0_2  23    0.92
+ 3_10   2    0.08
+    n n_n   percent
+  0_2  23 0.8214286
+ 3_10   5 0.1785714
+"

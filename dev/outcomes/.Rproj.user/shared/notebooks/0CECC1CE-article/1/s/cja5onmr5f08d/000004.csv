@@ -1,0 +1,30 @@
+"0","```r
+
+# mean global speed value
+speed_gl = as.numeric(
+  df_speed %>%
+  group_by(fileid) %>%
+  summarise(
+    site = first(site),
+    start = first(timestamp),
+    end = last(timestamp),
+    time = round(as.numeric(end-start)*60, digits = 0),
+    speed = mean(speed_inst,na.rm=T) 
+    ) %>%
+  summarise(
+    speed_mean = mean(speed)
+  )
+)
+
+# speed only when platform is moving per site
+df_speed %>%
+  filter(speed_inst != 0) %>%
+  group_by(site) %>%
+  summarise(
+    site = first(site),
+    start = first(timestamp),
+    end = last(timestamp),
+    time = round(as.numeric(end-start)*60, digits = 0),
+    speed_mov = mean(speed_inst, na.rm=T),
+    )
+```"

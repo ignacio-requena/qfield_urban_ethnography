@@ -1,0 +1,13 @@
+"0","```r
+m_df <- read_sf(here(\"1_dataset\", \"m_df.gpkg\"))
+m_df$stay_time <- \"0_2_min\" #assignation du temp de séjour aux deplacements
+m_df$posture <- \"debout\" #posture des deplacements
+m_df <- m_df %>% filter(mouvement == \"1\" | mouvement == \"2\") #filtrer que les mouvements à pied
+m_df <- m_df %>% rename(activity = mouvement)
+m_df$activity[m_df$activity == \"1\"] <- \"walk\"
+m_df$activity[m_df$activity == \"2\"] <- \"walk\"
+#m_df <- st_buffer(m_df, dist = m_df$row_total*0.4, joinStyle=\"ROUND\") #assumes 1 people = 0,8m wide
+plot(m_df)
+```"
+"1","Warning: plotting the first 9 out of 23 attributes; use max.plot = 23 to plot all
+"

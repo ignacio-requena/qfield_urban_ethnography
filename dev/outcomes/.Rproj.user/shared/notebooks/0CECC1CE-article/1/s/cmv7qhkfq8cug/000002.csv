@@ -1,0 +1,13 @@
+"0","```r
+
+# mean delta instant PET and cumulative mean PET
+df_metrics %>%
+  #filter(!is.na(df_metrics$PET_class)) %>%
+  group_by(fileid) %>%
+    summarise(
+      site = first(site),
+      delta = mean(PET_cm_diff),
+      sd = sd(PET_cm_diff)
+    ) %>%
+  mutate_if(is.numeric, round, digits=2)
+```"

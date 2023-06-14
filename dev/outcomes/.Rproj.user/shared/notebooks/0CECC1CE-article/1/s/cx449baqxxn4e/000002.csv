@@ -1,0 +1,31 @@
+"0","```r
+
+# diversity per site
+df_metrics %>%
+  filter(!is.na(df_metrics$PET_class)) %>%
+  group_by(fileid) %>%
+    summarise(
+      site = first(site),
+      date = first(date),
+      time = first(time),
+      n = n(),
+      boost_cool = 100*sum(unlist(PET_delta_class) == \"boost-cool\", na.rm = TRUE)/n,
+      boost_hot = 100*sum(unlist(PET_delta_class) == \"boost-hot\", na.rm = TRUE)/n,
+      reb_cool = 100*sum(unlist(PET_delta_class) == \"rebound-cool\", na.rm = TRUE)/n,
+      reb_hot = 100*sum(unlist(PET_delta_class) == \"rebound-hot\", na.rm = TRUE)/n) %>%
+  group_by(site) %>%
+    summarise(
+      n = n(),  
+      boost_cool = paste0(round(mean(boost_cool), digits = 1),\" (±\",round(sd(boost_cool, na.rm = TRUE), digits = 1),\")\"),
+      boost_hot = paste0(round(mean(boost_hot), digits = 1),\" (±\",round(sd(boost_hot, na.rm = TRUE), digits = 1),\")\"),
+      reb_cool = paste0(round(mean(reb_cool), digits = 1),\" (±\",round(sd(reb_cool, na.rm = TRUE), digits = 1),\")\"),
+      reb_hot = paste0(round(mean(reb_hot), digits = 1),\" (±\",round(sd(reb_hot, na.rm = TRUE), digits = 1),\")\")
+      ) %>%
+  kable(
+    format = \"markdown\",
+    caption = \"Summary of thermal constrast experienced when passing through each one of the study sites.\"
+    ) %>%
+  writeLines(here(\"outcomes\",\"tbl-exp-diversity-site.md\"))
+
+
+```"

@@ -1,0 +1,9 @@
+"0","```r
+s.df <- s.source[,c(\"survey_id\",\"row_id\",\"timestamp\",\"date\",\"time\",\"tc\",\"X_lb93\",\"Y_lb93\",\"X_wgs84\",\"Y_wgs84\",
+                      \"row_total\",\"gender_male\",\"gender_female\",\"age_mean\",\"age_0_7\", \"age_8_17\",\"age_18_34\",\"age_35_50\",\"age_51_64\",\"age_65\",
+                      \"posture\",\"engagement\",\"clothing\",\"exposure\",\"activity\",\"mode\",\"stay_time\")]
+
+m.df <- m.source[,c(\"survey_id\",\"row_id\",\"timestamp\",\"date\",\"time\",\"tc\",
+                      \"row_total\",\"gender_male\",\"gender_female\",\"age_mean\", \"age_0_7\", \"age_8_17\",\"age_18_34\",\"age_35_50\",\"age_51_64\",\"age_65\",
+                      \"engagement\",\"clothing\",\"exposure\",\"mouvement\",\"mode\")]
+```"

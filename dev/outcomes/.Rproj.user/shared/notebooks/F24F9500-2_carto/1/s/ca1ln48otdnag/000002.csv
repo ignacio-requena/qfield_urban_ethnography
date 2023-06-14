@@ -1,0 +1,14 @@
+"0","```r
+
+build <- read_sf(here(\"0_source\",\"buildings.gpkg\"))
+sidewalk <- read_sf(here(\"0_source\",\"sidewalks.gpkg\"))
+device <- read_sf(here(\"0_source\",\"gare_coasis.gpkg\"))
+
+#bbox <- c(xmin= 355807, ymin = 6686861, xmax = 355850, ymax = 6686907)
+bbox_1 <- st_bbox(st_buffer(device,dist = 25, joinStyle=\"ROUND\")) #global
+bbox_2 <- st_bbox(st_buffer(device,dist = 12, joinStyle=\"ROUND\")) #time
+bbox_3 <- st_bbox(st_buffer(device,dist = 3, joinStyle=\"ROUND\")) #zoom
+
+
+
+```"

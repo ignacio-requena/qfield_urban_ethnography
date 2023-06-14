@@ -1,0 +1,4 @@
+"0",""
+"0","buildings <- read_sf(here(""source"",""geom"",""context.gpkg""),""buildings"")"
+"0","plot(buildings)"
+"2","Warning: plotting the first 9 out of 27 attributes; use max.plot = 27 to plot all"

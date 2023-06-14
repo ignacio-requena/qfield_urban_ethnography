@@ -1,0 +1,84 @@
+"0","```r
+
+# dataframe metrics
+df_metrics = 
+  df_raw %>%
+    mutate(
+      PET_class =
+        ifelse(PET <= 4, \"-4 very-cold\",
+        ifelse(PET > 4  & PET <= 8, \"-3 cold\",
+        ifelse(PET > 8  & PET <= 13, \"-2 cool\",
+        ifelse(PET > 13  & PET <= 18, \"-1 slightly-cool\",
+        ifelse(PET > 18  & PET <= 23, \"0 comfortable\",
+        ifelse(PET > 23  & PET <= 29, \"1 slightly-warm\",
+        ifelse(PET > 29  & PET <= 35, \"2 warm\",
+        ifelse(PET > 35  & PET <= 41, \"3 hot\",
+        ifelse(PET > 41, \"4 very-hot\",NA       
+               ))))))))),
+      shadow =
+        ifelse(df_raw$SR01Up_1_Avg <= 200, \"shadow\",\"sun\")
+      )
+
+# variables for metrics calculation per measurement
+list=list()
+fileids = unique(df_metrics$fileid)
+vars = c(\"PET\")
+
+for (i in fileids) {
+
+df = df_metrics %>% filter(fileid == i) #fitering 1 mesurement data
+
+for (j in vars) {
+
+# relative time calculation in seconds
+df$time_rel = as.numeric(df$timestamp-min(df$timestamp))
+df$time_prc = df$time_rel/max(df$time_rel)  
+  
+# thermal experience metrics: cumulative average  
+df[[paste0(j,\"_cm\")]] = cummean(df[[j]])
+df[[paste0(j,\"_cm_diff\")]] = df[[j]] - df[[paste0(j,\"_cm\")]]
+
+# cumulative mean class according to PET classes
+df[[paste0(j,\"_cm_class\")]] =
+  ifelse(df[[paste0(j,\"_cm\")]] > 4  & df[[paste0(j,\"_cm\")]] <= 8, \"-3 cold\",
+  ifelse(df[[paste0(j,\"_cm\")]] > 8  & df[[paste0(j,\"_cm\")]] <= 13, \"-2 cool\",
+  ifelse(df[[paste0(j,\"_cm\")]] > 13  & df[[paste0(j,\"_cm\")]] <= 18, \"-1 slightly-cool\",
+  ifelse(df[[paste0(j,\"_cm\")]] > 18  & df[[paste0(j,\"_cm\")]] <= 23, \"0 comfortable\",
+  ifelse(df[[paste0(j,\"_cm\")]] > 23  & df[[paste0(j,\"_cm\")]] <= 29, \"1 slightly-warm\",
+  ifelse(df[[paste0(j,\"_cm\")]] > 29  & df[[paste0(j,\"_cm\")]] <= 35, \"2 warm\",
+  ifelse(df[[paste0(j,\"_cm\")]] > 35  & df[[paste0(j,\"_cm\")]] <= 41, \"3 hot\",
+  ifelse(df[[paste0(j,\"_cm\")]] > 41, \"4 very-hot\",NA 
+         ))))))))
+
+# thermal diversity deltas calculation
+df[[paste0(j,\"_delta_ent\")]] = round(df[[j]] - data.table::shift(df[[j]], n=30L, fill=NA, type=\"lag\"), digits = 3)
+df[[paste0(j,\"_delta_lea\")]] = round(data.table::shift(df[[j]], n=30L, fill=NA, type=\"lead\") - df[[j]], digits = 3)
+
+# thermal diversity class
+df[[paste0(j,\"_delta_class\")]] =
+  ifelse(df[[paste0(j,\"_delta_ent\")]] < 0 & df[[paste0(j,\"_delta_lea\")]] > 0,\"rebound-cool\",
+  ifelse(df[[paste0(j,\"_delta_ent\")]] > 0 & df[[paste0(j,\"_delta_lea\")]] < 0,\"rebound-hot\",
+  ifelse(df[[paste0(j,\"_delta_ent\")]] > 0 & df[[paste0(j,\"_delta_lea\")]] > 0,\"boost-hot\",
+  ifelse(df[[paste0(j,\"_delta_ent\")]] < 0 & df[[paste0(j,\"_delta_lea\")]] < 0,\"boost-cool\",
+  NA))))
+
+}
+
+#each fileid is a dataframe in a global list
+df_name = str_sub(i,-15,nchar(i))
+list[[length(list)+1]]=df
+
+rm(df)
+rm(df_name)
+
+}
+
+#transform the dataframe in a list
+df_metrics = rbindlist(list,use.names = FALSE)
+
+rm(list)
+rm(i)
+rm(j)
+rm(vars)
+
+```"

@@ -1,0 +1,17 @@
+"0","```r
+library(sf)
+
+#conversion of points into spatial feature object 
+s.source_lb93 <- st_as_sf(s.source, coords = c(\"X_lb93\", \"Y_lb93\"), crs = 2154, agr = \"constant\", remove = FALSE)
+  
+#conversion of Lambert93 coordinates into pseudo mercator (WGS84, EPSg 3857) for kepler.gl
+s.source_wgs84 <- st_transform(s.source_lb93, 4326)
+  
+#extracting X and Y coordinates from geometry
+s.source_xy_wgs84 <- st_coordinates(s.source_wgs84)
+  
+#replacing longitude and latitude by X and Y respectively
+s.source$X_wgs84 <- s.source_xy_wgs84[,1]
+s.source$Y_wgs84 <- s.source_xy_wgs84[,2]
+
+```"

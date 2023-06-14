@@ -1,0 +1,10 @@
+"0","```r
+
+rm(vars)
+rm(i)
+rm(bp_Tair_d)
+rm(bp_Rh_d)
+rm(bp_Sr_d)
+rm(bp_Ws_d)
+
+```"

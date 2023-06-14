@@ -1,0 +1,40 @@
+"0","```r
+# variations per site and day
+df_bcs %>%
+  group_by(site,date) %>%
+    summarise(
+      Tair_mean = mean(mf_tair,na.rm=TRUE),
+      Tair_sd = sd(mf_tair,na.rm=TRUE),
+      Tair_max = max(mf_tair,na.rm=TRUE),
+      Rh_mean = mean(mf_rh,na.rm=TRUE),
+      Rh_sd = sd(mf_rh,na.rm=TRUE),
+      Sr_mean = mean(mf_sr,na.rm=TRUE),
+      Sr_sd = sd(mf_sr, na.rm=TRUE),
+      Ws_mean = mean(mf_ws, na.rm=TRUE),
+      Ws_sd = sd(mf_ws, na.rm=TRUE)
+      ) %>%
+  mutate_if(is.numeric, round, digits=1) %>%
+  mutate(Tair_norm =
+    ifelse(site == \"graslin\", 22.4,
+    ifelse(site == \"jardinextra\",25.1,
+    ifelse(site == \"ladefense\",25.9,
+    ifelse(site == \"quaiplantes\",25.1,NA
+    ))))) %>%
+  relocate(Tair_norm, .before = Tair_mean) %>%
+  mutate(
+    Tair_mean = paste0(Tair_mean,\" (±\",Tair_sd,\")\"),
+    Tair_max =paste0(Tair_max,\" (+\",round(Tair_max-Tair_norm, digits = 1),\")\"),
+    Rh_mean = paste0(Rh_mean,\" (±\",Rh_sd,\")\"),
+    Sr_mean = paste0(Sr_mean,\" (±\",Sr_sd,\")\"),
+    Ws_mean = paste0(Ws_mean,\" (±\",Ws_sd,\")\")) %>%
+  select(!c(\"Tair_norm\",\"Tair_sd\",\"Rh_sd\",\"Sr_sd\",\"Ws_sd\")) %>%
+  arrange(date) %>%
+  kable(
+    format = \"markdown\",
+    col.names = c(\"site\",\"date\",\"Tair mean\",\"Tair max (norm diff.)\",\"Rh mean\",\"Sr mean\",\"Ws mean\"),
+    caption = \"Meteo France mesurements daily means and SD during mobile measurement times and comparison with the daily normal.\",
+    align = \"lccccccc\"
+    ) 
+```"
+"1","`summarise()` has grouped output by 'site'. You can override using the `.groups` argument.`mutate_if()` ignored the following grouping variables:
+"

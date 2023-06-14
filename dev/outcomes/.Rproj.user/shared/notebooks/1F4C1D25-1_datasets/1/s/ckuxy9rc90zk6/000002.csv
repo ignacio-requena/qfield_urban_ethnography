@@ -1,0 +1,24 @@
+"0","```r
+library(dplyr)
+library(tibble)
+
+#survey_id
+s.source$survey_id <- paste0(substr(s.source$path,start=76,stop=81),\"_\",substr(s.source$path,start=83,stop=87))
+s.source$survey_id<-gsub(\"-\",\"\",s.source$survey_id)
+s.source$survey_id<-gsub(\"_\",\"\",s.source$survey_id)
+
+m.source$survey_id <- paste0(substr(m.source$path,start=76,stop=81),\"_\",substr(m.source$path,start=83,stop=87))
+m.source$survey_id<-gsub(\"-\",\"\",m.source$survey_id)
+m.source$survey_id<-gsub(\"_\",\"\",m.source$survey_id)
+
+# row_id
+s.source$row_id <- paste(s.source$survey_id, ave(s.source$id,s.source$survey_id, FUN = seq_along), sep=\"\")
+m.source$row_id <- paste(m.source$survey_id, ave(m.source$id,m.source$survey_id, FUN = seq_along), sep=\"\")
+
+#tc
+s.source$tc <- substr(s.source$path,start=83,stop=87)
+s.source$tc<-gsub(\"-\",\":\",s.source$tc)
+m.source$tc <- substr(m.source$path,start=83,stop=87)
+m.source$tc<-gsub(\"-\",\":\",m.source$tc)
+
+```"

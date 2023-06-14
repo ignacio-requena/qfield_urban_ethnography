@@ -1,0 +1,26 @@
+"0","```r
+
+rm(city)
+rm(col)
+rm(cs_tsmax)
+rm(cs_tsmin)
+rm(fileid_cs)
+rm(fileid_ref)
+rm(filename)
+rm(mf.col)
+rm(site)
+rm(station_mob)
+rm(station_ref)
+rm(df)
+rm(cs)
+rm(mf)
+
+df_raw = rbindlist(data_list,use.names = FALSE)
+
+df_raw = df_raw %>%
+          dplyr::select(-timestamp,-i.timestamp)%>%
+          rename(timestamp = join_date)
+
+rm(data_list)
+
+```"

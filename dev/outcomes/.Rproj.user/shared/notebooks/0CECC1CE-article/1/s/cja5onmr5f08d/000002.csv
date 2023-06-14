@@ -1,0 +1,32 @@
+"0","```r
+
+# dataframe creation with instant speed calculation 
+df_speed =
+  df_bcs %>%
+  #mutate(site = paste0(year(timestamp),\"_\",site)) %>%
+  distinct %>%
+  group_by(fileid) %>%
+  mutate(ts_inst = as.numeric(timestamp - shift(timestamp)),
+         dist_inst = curv_absc - shift(curv_absc),
+         speed_inst = dist_inst/ts_inst) %>%
+  mutate(
+    ts_inst = ifelse(ts_inst > 2 | ts_inst < 0, NA,ts_inst),
+    dist_inst = ifelse(dist_inst < 0, NA,dist_inst),
+    speed_inst = ifelse(is.na(ts_inst) | is.na(dist_inst), NA,speed_inst)
+  ) %>%
+  dplyr::select(-ts_inst,-dist_inst) 
+
+# global measurement speed considering all the track points
+df_speed %>%
+  summarise(
+    site = first(site),
+    start = first(timestamp),
+    end = last(timestamp),
+    time = round(as.numeric(end-start)*60, digits = 0),
+    speed_glo = mean(speed_inst, na.rm=T),
+    ) %>%
+  summarise(
+    speed_glo_mean = mean(speed_glo),
+    speed_glo_sd = sd(speed_glo)
+  )
+```"

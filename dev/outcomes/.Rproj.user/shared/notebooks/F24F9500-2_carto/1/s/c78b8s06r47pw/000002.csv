@@ -1,0 +1,65 @@
+"0","```r
+
+plot_total =
+ggplot() +
+  geom_sf(data=build, color = gray(0.5),size = 0.4)+
+  geom_sf(data=sidewalk, color = gray(0.5),size = 0.15)+
+  geom_sf(data=device, color = \"black\",size = 0.1, fill = NA)+
+  geom_sf(data=s_df, aes(color=row_total), size = s_df$row_total*1.8, alpha = 0.2, color = \"red\")+
+  geom_sf(data=m_df, aes(color=row_total), size = m_df$row_total*0.5, alpha = 0.2, color = \"blue\")+
+  xlim(bbox_1[[\"xmin\"]],bbox_1[[\"xmax\"]])+
+  ylim(bbox_1[[\"ymin\"]],bbox_1[[\"ymax\"]])+
+  theme_carto
+
+plot_zoom =
+ggplot() +
+  geom_sf(data=build, color = gray(0.5),size = 0.4)+
+  geom_sf(data=sidewalk, color = gray(0.5),size = 0.15)+
+  geom_sf(data=device, color = \"black\",size = 0.1, fill = NA)+
+  geom_sf(data=s_df, aes(color=row_total), size = s_df$row_total*1.5, alpha = 0.3, color = \"red\")+
+  geom_sf(data=m_df, aes(color=row_total), size = m_df$row_total*0.8, alpha = 0.3, color = \"blue\")+
+  xlim(bbox_3[[\"xmin\"]],bbox_3[[\"xmax\"]])+
+  ylim(bbox_3[[\"ymin\"]],bbox_3[[\"ymax\"]])+
+  theme_carto
+
+plot_global <- plot_grid(plot_total,plot_zoom,
+          ncol = 1,
+          align=\"h\"
+          )
+
+plot_time =
+ggplot() +
+  geom_sf(data=build, color = gray(0.5),size = 0.2)+
+  geom_sf(data=sidewalk, color = gray(0.5),size = 0.2)+
+  geom_sf(data=device, color = \"black\",size = 0.1, fill = NA)+
+  geom_sf(data=s_df, aes(color=row_total), size = s_df$row_total*0.5, alpha = 0.3, color = \"red\")+
+  geom_sf(data=m_df, aes(color=row_total), size = m_df$row_total*0.4, alpha = 0.3, color = \"blue\")+
+  xlim(bbox_2[[\"xmin\"]],bbox_2[[\"xmax\"]])+
+  ylim(bbox_2[[\"ymin\"]],bbox_2[[\"ymax\"]])+
+  theme_void()+
+  facet_grid(rows = vars(tc), cols = vars(date))+
+  guides(scale = \"none\",alpha=FALSE)+
+  theme_carto
+```"
+"1","Warning: `guides(<scale> = FALSE)` is deprecated. Please use `guides(<scale> = \"none\")` instead.
+"
+"0","```r
+plot_freq = plot_grid(plot_global,plot_time,
+          nrow = 1,
+          align = \"h\",
+          labels = \"auto\",
+          label_size = 10
+          )
+```"
+"1","Warning: Graphs cannot be horizontally aligned unless the axis parameter is set. Placing graphs unaligned.
+"
+"0","```r
+ggdraw(add_sub(plot_freq,
+        \"(a) frequentation totale ; (b) frequentation par heure)\",
+        x = 0, hjust = 0,
+        size = 10
+        ))
+
+ggsave(here(\"2_carto\",paste0(sitename,\"_plot_use_1.jpeg\")), width = 16, height = 23, unit = \"cm\")
+
+```"

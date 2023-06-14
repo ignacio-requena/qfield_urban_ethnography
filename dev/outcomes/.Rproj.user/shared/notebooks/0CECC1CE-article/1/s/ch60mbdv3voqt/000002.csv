@@ -1,0 +1,93 @@
+"0","```r
+
+# daily variations per site
+df_bcs %>%
+  group_by(site,date) %>%
+    summarise(
+      Tair_mean = mean(mf_tair,na.rm=TRUE),
+      Tair_sd = sd(mf_tair,na.rm=TRUE),
+      Tair_max = max(mf_tair,na.rm=TRUE),
+      Rh_mean = mean(mf_rh,na.rm=TRUE),
+      Rh_sd = sd(mf_rh,na.rm=TRUE),
+      Sr_mean = mean(mf_sr,na.rm=TRUE),
+      Sr_sd = sd(mf_sr, na.rm=TRUE),
+      Ws_mean = mean(mf_ws, na.rm=TRUE),
+      Ws_sd = sd(mf_ws, na.rm=TRUE)
+      ) %>%
+  mutate(Tair_norm =
+    ifelse(site == \"graslin\", 22.4,
+    ifelse(site == \"jardinextra\",25.1,
+    ifelse(site == \"ladefense\",25.9,
+    ifelse(site == \"quaiplantes\",25.1,NA
+    )))),
+    Tair_maxdelta = Tair_max-Tair_norm
+    ) %>%
+  arrange(date) %>%
+  group_by(site) %>%
+    summarise(
+      Tair_maxdelta_m = mean(Tair_maxdelta,na.rm=TRUE),
+      Tair_maxdelta_sd = sd(Tair_maxdelta,na.rm=TRUE),
+      Tair_m = mean(Tair_mean,na.rm=TRUE),
+      Tair_sd = sd(Tair_mean,na.rm=TRUE),
+      Rh_m = mean(Rh_mean,na.rm=TRUE),
+      Rh_sd = sd(Rh_mean,na.rm=TRUE),
+      Sr_m = mean(Sr_mean,na.rm=TRUE),
+      Sr_sd = sd(Sr_mean, na.rm=TRUE),
+      Ws_m = mean(Ws_mean, na.rm=TRUE),
+      Ws_sd = sd(Ws_mean, na.rm=TRUE)
+      ) %>%
+  mutate_if(is.numeric, round, digits=1) %>%
+  mutate(
+    Tair_maxdelta = paste0(\"+\",Tair_maxdelta_m,\" (±\",Tair_maxdelta_sd,\")\"),
+    Tair = paste0(Tair_m,\" (±\",Tair_sd,\")\"),
+    Rh = paste0(Rh_m,\" (±\",Rh_sd,\")\"),
+    Sr = paste0(Sr_m,\" (±\",Sr_sd,\")\"),
+    Ws = paste0(Ws_m,\" (±\",Ws_sd,\")\")
+    ) %>%
+  select(c(\"site\",\"Tair_maxdelta\",\"Tair\",\"Rh\",\"Sr\",\"Ws\")) %>%
+  kable(
+    format = \"markdown\",
+    col.names = c(\"site\",\"TairM (delta normal)\",\"Tair\",\"Rh\",\"Sr\",\"Ws\"),
+    caption = \"Meteo France mesurements daily means and SD during mobile measurement times and comparison with the daily normal.\",
+    align = \"lccccc\"
+    ) %>%
+  writeLines(here(\"outcomes\",\"tbl-bcs-site.md\"))
+```"
+"1","`summarise()` has grouped output by 'site'. You can override using the `.groups` argument.
+"
+"0","```r
+# delta from normal
+df_bcs %>%
+  group_by(site,date) %>%
+    summarise(
+      Tair_mean = mean(mf_tair,na.rm=TRUE),
+      Tair_sd = sd(mf_tair,na.rm=TRUE),
+      Tair_max = max(mf_tair,na.rm=TRUE),
+      Rh_mean = mean(mf_rh,na.rm=TRUE),
+      Rh_sd = sd(mf_rh,na.rm=TRUE),
+      Sr_mean = mean(mf_sr,na.rm=TRUE),
+      Sr_sd = sd(mf_sr, na.rm=TRUE),
+      Ws_mean = mean(mf_ws, na.rm=TRUE),
+      Ws_sd = sd(mf_ws, na.rm=TRUE)
+      ) %>%
+  mutate_if(is.numeric, round, digits=1) %>%
+  mutate(Tair_norm =
+    ifelse(site == \"graslin\", 22.4,
+    ifelse(site == \"jardinextra\",25.1,
+    ifelse(site == \"ladefense\",25.9,
+    ifelse(site == \"quaiplantes\",25.1,NA
+    )))),
+    Tair_maxdelta = Tair_max-Tair_norm
+    ) %>%
+  ungroup() %>%
+  summarise(
+    Tair_maxdelta_m = mean(Tair_maxdelta),
+    Tair_maxdelta_sd = sd(Tair_maxdelta),
+    Sr_m = mean(Sr_mean, na.rm = T),
+    Sr_sd = sd(Sr_mean, na.rm = T),
+    Ws_m = mean(Ws_mean, na.rm = T),
+    Ws_sd = sd(Ws_mean, na.rm = T)
+  )
+```"
+"1","`summarise()` has grouped output by 'site'. You can override using the `.groups` argument.`mutate_if()` ignored the following grouping variables:
+"

@@ -1,0 +1,13 @@
+"0","```r
+hexbin_sum = rbindlist(hexbin_sum,use.names = FALSE)
+
+hexbin_agr = list()
+
+for (i in sites) {
+df = get(paste0(i,\"_hexbin_agr\"))
+hexbin_agr[[length(hexbin_agr)+1]]=df
+}
+
+hexbin_agr = rbindlist(hexbin_agr,use.names = FALSE)
+
+```"

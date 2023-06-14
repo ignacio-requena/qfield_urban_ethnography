@@ -1,0 +1,101 @@
+"0","```r
+
+hexbin_sum = list()
+sites = unique(df_raw$site)
+
+for (i in sites) {
+
+track = get(paste0(i,\"_track\"))
+
+grid = 
+  st_make_grid(
+    track,
+    cellsize = 3.3,
+    square = FALSE) %>% 
+  st_sf %>% 
+  st_cast %>%
+  mutate(id = 1:n())
+
+hexbin =
+  st_join(
+    grid,
+    df_sf %>% filter(site == i),
+    left = FALSE,
+    join = st_intersects)
+
+hexbin_agr =
+  hexbin %>%
+  group_by(id,fileid) %>%
+  summarise(
+    site = first(site),
+    timestamp = first(timestamp),
+    date = first(date),
+    time = first(time),
+    n = n(),
+    tair = mean(AirTC_Avg, na.rm = T),
+    #tair_r = max(AirTC_Avg)-min(AirTC_Avg),
+    tair_cv = 100*sd(AirTC_Avg, na.rm = T)/mean(AirTC_Avg, na.rm = T),
+    hr = mean(RH_Avg, na.rm = T),
+    #hr_r = max(RH_Avg)-min(RH_Avg),
+    hr_cv = 100*sd(RH_Avg, na.rm = T)/mean(RH_Avg, na.rm = T),
+    ws = mean(WS_ms_Avg, na.rm = T),
+    #ws_r = max(WS_ms_Avg)-min(WS_ms_Avg),
+    ws_cv = 100*sd(WS_ms_Avg, na.rm = T)/mean(WS_ms_Avg, na.rm = T),
+    sr = mean(abs(SR01Dn_1_Avg), na.rm = T),
+    #sr_r = max(SR01Dn_1_Avg)-min(SR01Dn_1_Avg),
+    sr_cv = 100*sd(abs(SR01Dn_1_Avg), na.rm = T)/mean(abs(SR01Dn_1_Avg), na.rm = T),
+    ir = mean(IR01DnCo_1_Avg, na.rm = T),
+    #ir_r = max(IR01DnCo_1_Avg)-min(IR01DnCo_1_Avg),
+    ir_cv = 100*sd(IR01DnCo_1_Avg, na.rm = T)/mean(IR01DnCo_1_Avg, na.rm = T),
+    mrt = mean(T_mrt, na.rm = T),
+    #mrt_r = max(T_mrt)-min(T_mrt),
+    mrt_cv = 100*sd(T_mrt, na.rm = T)/mean(T_mrt, na.rm = T),
+    cv = tair_cv+hr_cv+ws_cv+sr_cv+ir_cv+mrt_cv,
+    pet = mean(PET, na.rm = T)
+    #pet_r = max(PET)-min(PET)
+    ) %>%
+  replace(is.na(.), 0) %>%
+  group_by(fileid) %>%
+  mutate_if(is.numeric, round, digits=2) %>%
+  mutate(cv_class = ifelse(cv > 0.75*max(cv),\"top25\",\"low75\")) %>%
+  mutate_at(vars(--id,-fileid,-timestamp,-date,-time,-n,-geometry), funs(round(., 2))) %>%
+  st_as_sf()
+
+hexbin_stat = 
+  hexbin_agr %>%
+  st_drop_geometry() %>%
+  na.omit %>%
+  group_by(fileid) %>%
+  summarise(
+    site = first(site),
+    polygons = n(),
+    nb_measures = mean(n),
+    tair_cv = mean(tair_cv),
+    hr_cv = mean(hr_cv),
+    ws_cv = mean(ws_cv),
+    sr_cv = mean(sr_cv),
+    ir_cv = mean(ir_cv),
+    mrt_cv = mean(mrt_cv),
+    cv = mean(cv),
+    cv_class = sum(cv_class == \"top25\")) %>%
+  mutate_if(is.numeric, round, digits=2)
+
+hexbin_sum[[length(hexbin_sum)+1]]=hexbin_stat
+
+assign(paste0(i,\"_grid\"),grid)
+assign(paste0(i,\"_hexbin\"),hexbin)
+assign(paste0(i,\"_hexbin_agr\"),hexbin_agr)
+
+plot(grid)
+#plot(grid[track], col = '#ff000088', add= TRUE)
+
+rm(track)
+rm(grid)
+rm(hexbin)
+rm(hexbin_agr)
+rm(hexbin_stat)
+
+}
+```"
+"1","`summarise()` has grouped output by 'id'. You can override using the `.groups` argument.`mutate_if()` ignored the following grouping variables:
+"

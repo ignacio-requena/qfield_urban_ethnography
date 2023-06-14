@@ -1,0 +1,11 @@
+"0","```r
+
+ggarrange(
+  quaiplantes_hexbin_map,jardinextra_hexbin_map,graslin_hexbin_map,ladefense_hexbin_map,
+  align='v',
+  nrow = 1,
+  common.legend = T)
+
+ggsave(here(\"outcomes\",paste0(\"fig-var-top25-.jpg\")), width = 24, height = 12, unit = \"cm\")
+
+```"

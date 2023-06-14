@@ -1,0 +1,23 @@
+"0","```r
+
+df_rt = data.frame(
+sensor = c(\"hmp155a\",\"hmp155a\",\"thermocouple type T 0.3mm\",\"windsonic 2D\",\"nr01 pyranometer\",\"nr01 pyrgeometer\"),
+parameter = c(\"tair\",\"rh\",\"tair\",\"ws\",\"swr\",\"lwr\"),
+rt_63 = c(20.00,20.00,0.50,1.00,6.67,6.67)
+)
+
+df_rt$res_mv = round(df_rt$rt*speed_mov, digits = 2)
+df_rt$res_gl = round(df_rt$rt*speed_gl, digits = 2)
+
+df_rt %>%
+  kable(
+    format = \"markdown\",
+    col.names = c(\"sensor\",\"measured parameter\",\"response time 63% (sec.)\",\"resolution moving (m.)\", \"resolution global (m.)\"),
+    caption = \"Sensors spatial resolution.\",
+    align = \"llccc\"
+    ) %>%
+  writeLines(here(\"outcomes\",\"tbl-bcs-resolution.md\"))
+
+
+
+```"

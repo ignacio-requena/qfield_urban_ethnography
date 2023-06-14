@@ -1,0 +1,3 @@
+"0",""
+"0","bbox <- st_bbox(st_buffer(boundary,dist = 5, joinStyle=""ROUND"")) #global"
+"0",""

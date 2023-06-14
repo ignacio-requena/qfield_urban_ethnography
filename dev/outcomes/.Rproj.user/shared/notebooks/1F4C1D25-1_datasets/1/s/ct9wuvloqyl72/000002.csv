@@ -1,0 +1,18 @@
+"0","```r
+library(arulesCBA)
+
+# Row_total
+s.source$row_total <- s.source$gender_male+s.source$gender_female
+m.source$row_total <- m.source$gender_male+m.source$gender_female
+
+# Mean age per group
+s.source$age_mean <- round(((s.source$age_0_7*3.5)+(s.source$age_8_17*12.5)+(s.source$age_18_34*26)+
+                                (s.source$age_35_50*42.5)+(s.source$age_51_64*57.5)+
+                                (s.source$age_65*72.5))/s.source$row_total,1)
+
+m.source$age_mean <- round(((m.source$age_0_7*3.5)+(m.source$age_8_17*12.5)+(m.source$age_18_34*26)+
+                                (m.source$age_35_50*42.5)+(m.source$age_51_64*57.5)+
+                                (m.source$age_65*72.5))/m.source$row_total,1)
+
+
+```"

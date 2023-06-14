@@ -1,0 +1,3 @@
+"0","plan <- raster(here(""source"",""geom"",""map_georeferenced_clip.tif""))"
+"2","Warning: [minmax] min and max values not available for all layers. See 'setMinMax' or 'global'"
+"0","plot(plan)"

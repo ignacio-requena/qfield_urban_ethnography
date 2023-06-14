@@ -1,0 +1,13 @@
+"0","```r
+library(here)
+library(readr)
+library(sf)
+library(dplyr)
+
+library(ggplot2)
+library(arulesCBA)
+library(RColorBrewer)
+library(ggmap)
+library(cowplot)
+
+```"
