@@ -13,6 +13,9 @@ library(sf)
 library(data.table)
 library(ggplot2)
 library(raster)
+library(prismatic)
+library(arulesCBA)
+library(tibble)
 
 ```
 
@@ -24,8 +27,8 @@ library(raster)
 
 filenames <- list.files(here("source"),pattern="*.gpkg$")
 
-layers_s = c("09h30_staying","12h30_staying")#,"15h30_staying","18h30_staying")
-layers_m = c("09h30_moving","12h30_moving")#,"15h30_moving","18h30_moving")
+layers_s = c("09h30_staying","12h30_staying","15h30_staying","18h30_staying")
+layers_m = c("09h30_moving","12h30_moving","15h30_moving","18h30_moving")
 
 list_m = list()
 list_s = list()
@@ -71,57 +74,177 @@ buildings <- read_sf(here("source","geom","context.gpkg"),"buildings")
 plot(buildings)
 boundary = read_sf(here("source","geom","context.gpkg"),"perimetre") %>% slice(1)
 plot(boundary)
+zones = read_sf(here("source","geom","context.gpkg"),"zones")
+plot(zones)
+track = read_sf(here("source","geom","track.gpkg"),"track3")
+plot(track)
 
-basemap <- raster(here("source","geom","basemap.tif"))
-plot(basemap)
-plan <- raster(here("source","geom","map_georeferenced_clip.tif"))
-plot(plan)
+basemap = stack(here("source","geom","basemap.tif"))
+basemap_df = as.data.frame(basemap, xy= TRUE)
+basemap_df = 
+  basemap_df %>% 
+  rename(red = basemap_1, #Rename bands
+         green = basemap_2,
+         blue = basemap_3) %>%
+  filter(red != 0) #drop data w/o rgb information
+
+map = stack(here("source","geom","map_georeferenced_clip.tif"))
+map_df = as.data.frame(map, xy= TRUE)
+map_df = 
+  map_df %>% 
+  rename(red = map_georeferenced_clip_1, #Rename bands
+         green = map_georeferenced_clip_2,
+         blue = map_georeferenced_clip_3) %>%
+  filter(red != 0) #drop data w/o rgb information
 
 bbox <- st_bbox(st_buffer(boundary,dist = 5, joinStyle="ROUND")) #global
 
 ```
 
+#Data organisation
+
+## IDs
+```{r}
+
+#survey_id
+df_s$survey_id <- paste0(substr(df_s$path,start=76,stop=81),"_",substr(df_s$path,start=83,stop=87))
+df_s$survey_id<-gsub("-","",df_s$survey_id)
+df_s$survey_id<-gsub("_","",df_s$survey_id)
+
+df_m$survey_id <- paste0(substr(df_m$path,start=76,stop=81),"_",substr(df_m$path,start=83,stop=87))
+df_m$survey_id<-gsub("-","",df_m$survey_id)
+df_m$survey_id<-gsub("_","",df_m$survey_id)
+
+# row_id
+df_s$row_id <- paste(df_s$survey_id, ave(df_s$id,df_s$survey_id, FUN = seq_along), sep="")
+df_m$row_id <- paste(df_m$survey_id, ave(df_m$id,df_m$survey_id, FUN = seq_along), sep="")
+
+#tc
+df_s$tc <- substr(df_s$path,start=83,stop=87)
+df_s$tc<-gsub("-",":",df_s$tc)
+df_m$tc <- substr(df_m$path,start=83,stop=87)
+df_m$tc<-gsub("-",":",df_m$tc)
+
+```
+
+## Means & totals
+```{r}
+
+# Row_total
+df_s$row_total <- df_s$gender_male+df_s$gender_female
+df_m$row_total <- df_m$gender_male+df_m$gender_female
+
+# Mean age per group
+df_s$age_mean <- round(((df_s$age_0.14*7)+(df_s$age_15.24*19.5)+(df_s$age_25.44*34.5)+
+                                (df_s$age_45.64*54.5)+(df_s$age_65.74*69.5)+
+                                (df_s$age_75p*80))/df_s$row_total,digits = 1)
+
+df_m$age_mean <- round(((df_m$age_0.14*7)+(df_m$age_15.24*19.5)+(df_m$age_25.44*34.5)+
+                                (df_m$age_45.64*54.5)+(df_m$age_65.74*69.5)+
+                                (df_m$age_75p*80))/df_m$row_total,digits = 1)
+
+```
+
+
+## Separating columns of time & date from timestamp
+```{r}
+df_s$timestamp <- gsub('T',' ',df_s$timestamp)
+df_s$timestamp <- substr(df_s$timestamp,start=1,stop=19)
+df_s$date <- format(as.POSIXct(strptime(df_s$timestamp,"%Y-%m-%d",tz="")),format = "%Y-%m-%d") # separate date column
+df_s$time <- format(as.POSIXct(strptime(df_s$timestamp,"%Y-%m-%d %H:%M:%S",tz="")) ,format = "%H:%M:%S") # separate time column
+
+df_m$timestamp <- gsub('T',' ',df_m$timestamp)
+df_m$timestamp <- substr(df_m$timestamp,start=1,stop=19)
+df_m$date <- format(as.POSIXct(strptime(df_m$timestamp,"%Y-%m-%d",tz="")),format = "%Y-%m-%d") # separate date column
+df_m$time <- format(as.POSIXct(strptime(df_m$timestamp,"%Y-%m-%d %H:%M:%S",tz="")) ,format = "%H:%M:%S") # separate time column
+```
+
+
+## Adding coordinates WGS84
+```{r}
+library(sf)
+
+#conversion of points into spatial feature object 
+df_s_lb93 <- st_as_sf(df_s, coords = c("X_lb93", "Y_lb93"), crs = 2154, agr = "constant", remove = FALSE)
+  
+#conversion of Lambert93 coordinates into pseudo mercator (WGS84, EPSg 3857) for kepler.gl
+df_s_wgs84 <- st_transform(df_s_lb93, 4326)
+  
+#extracting X and Y coordinates from geometry
+df_s_xy_wgs84 <- st_coordinates(df_s_wgs84)
+  
+#replacing longitude and latitude by X and Y respectively
+df_s$X_wgs84 <- df_s_xy_wgs84[,1]
+df_s$Y_wgs84 <- df_s_xy_wgs84[,2]
+
+```
+
+## Reorder dataframe
+```{r}
+s.df <- df_s[,c("survey_id","row_id","timestamp","date","time","tc","X_lb93","Y_lb93","X_wgs84","Y_wgs84",
+                      "row_total","gender_male","gender_female","age_mean","age_0_7", "age_8_17","age_18_34","age_35_50","age_51_64","age_65",
+                      "posture","engagement","clothing","exposure","activity","mode","stay_time")]
+
+m.df <- df_m[,c("survey_id","row_id","timestamp","date","time","tc",
+                      "row_total","gender_male","gender_female","age_mean", "age_0_7", "age_8_17","age_18_34","age_35_50","age_51_64","age_65",
+                      "engagement","clothing","exposure","mouvement","mode")]
+```
 
 
 # Spatial aggregation
+
+## mesh
 ```{r}
 
 grid = 
   st_make_grid(
     boundary,
-    cellsize = 5,
+    cellsize = 7,
     square = FALSE) %>% 
   st_sf() %>% 
   st_cast %>%
-  mutate(id = 1:n())
+  mutate(
+    id = 1:n())
 
+grid = grid %>%
+  mutate(
+    int = st_intersects(grid,boundary, sparse = F)
+    ) %>%
+  filter(int == T) %>%
+  dplyr::select(-int)
+  
 plot(grid)
 
+```
+
+
+## aggregation
+```{r}
 hexbin_s =
   st_join(
     grid,
-    df_s,
+    df_s %>% filter(row_total != 0),
     left = FALSE,
     join = st_intersects) %>%
   group_by(id,fileid) %>%
   summarise(
     n = n(),
+    nbp = sum(row_total),
     gender_male = sum(gender_male),
     gender_female = sum(gender_female))
 
 hexbin_m =
   st_join(
     grid,
-    df_m,
+    df_m %>% filter(row_total != 0),
     left = FALSE,
     join = st_intersects) %>%
   group_by(id,fileid) %>%
   summarise(
     n = n(),
+    nbp = sum(row_total),
     gender_male = sum(gender_male),
     gender_female = sum(gender_female))
-
-
 
 ```
 
@@ -152,34 +275,50 @@ theme_carto <-
 
 ```{r}
 
-ggplot() +
-  #geom_raster(data = basemap,aes(x = x, y = y))
+bck =
+  ggplot() +
+  geom_raster(
+    data = basemap_df, aes(x = x, y =y), fill = rgb(r = basemap_df$red, g = basemap_df$green, b = basemap_df$blue, maxColorValue = 255),
+    show.legend = FALSE)+
+  geom_raster(
+    data = map_df, aes(x = x, y =y), fill = rgb(r = map_df$red, g = map_df$green, b = map_df$blue, maxColorValue = 255),
+    show.legend = FALSE)
+
+bck +
+#ggplot()+
   geom_sf(data=buildings, color = gray(0.5),size = 0.4)+
   geom_sf(data=df_s, alpha = 0.2, color = "red")+
   geom_sf(data=df_m, alpha = 0.2, color = "blue")+
+  geom_sf(data=zones, alpha = 1, color = "red",fill = NA, lty = 2, lwd = 5)+
   xlim(bbox[["xmin"]],bbox[["xmax"]])+
   ylim(bbox[["ymin"]],bbox[["ymax"]])+
   theme_carto
 
-ggplot() +
-  #geom_raster(data = basemap,aes(x = x, y = y))
+ggsave(here("outcomes","all.jpg"))
+
+bck +
+#ggplot()+  
   geom_sf(data=grid, color = gray(0.5),size = 0.1, fill = NA)+
   geom_sf(data=buildings, color = gray(0.5),size = 0.4)+
-  geom_sf(data=hexbin_s, aes(fill = gender_male),alpha = 0.2)+
+  geom_sf(data=hexbin_s, aes(fill = nbp,alpha = nbp))+
   #geom_sf(data=df_m, alpha = 0.2, color = "blue")+
   xlim(bbox[["xmin"]],bbox[["xmax"]])+
   ylim(bbox[["ymin"]],bbox[["ymax"]])+
   theme_carto
 
-ggplot() +
-  #geom_raster(data = basemap,aes(x = x, y = y))
+ggsave(here("outcomes","hex_staying.jpg"))
+
+bck +
+#ggplot()+  
   geom_sf(data=grid, color = gray(0.5),size = 0.1, fill = NA)+
   geom_sf(data=buildings, color = gray(0.5),size = 0.4)+
-  geom_sf(data=hexbin_m, aes(fill = gender_male),alpha = 0.2)+
+  geom_sf(data=hexbin_m, aes(fill = nbp, alpha = nbp))+
   #geom_sf(data=df_m, alpha = 0.2, color = "blue")+
   xlim(bbox[["xmin"]],bbox[["xmax"]])+
   ylim(bbox[["ymin"]],bbox[["ymax"]])+
   theme_carto
+
+ggsave(here("outcomes","hex_moving.jpg"))
 
 ```
 
