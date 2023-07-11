@@ -65,6 +65,12 @@ df_s %>% ggplot() + geom_sf()
 df_m = rbindlist(list_m,use.names = FALSE) %>% st_as_sf()
 df_m %>% ggplot() + geom_sf()
 
+df_s = df_s %>% 
+  rename_with(~ gsub(".", "_", .x, fixed = TRUE))
+
+df_m = df_m %>% 
+  rename_with(~ gsub(".", "_", .x, fixed = TRUE))
+
 ```
 
 ## context
@@ -107,23 +113,36 @@ bbox <- st_bbox(st_buffer(boundary,dist = 5, joinStyle="ROUND")) #global
 ```{r}
 
 #survey_id
-df_s$survey_id <- paste0(substr(df_s$path,start=76,stop=81),"_",substr(df_s$path,start=83,stop=87))
-df_s$survey_id<-gsub("-","",df_s$survey_id)
-df_s$survey_id<-gsub("_","",df_s$survey_id)
+df_s$survey_id =
+  paste0(
+  str_split_i(df_s$fileid,"_",1),"_",
+  str_split_i(df_s$fileid,"_",2),"_",
+  str_split_i(df_s$fileid,"_",4),"_",
+  gsub("h","",str_split_i(df_s$layer,"_",1)),
+  "00")
 
-df_m$survey_id <- paste0(substr(df_m$path,start=76,stop=81),"_",substr(df_m$path,start=83,stop=87))
-df_m$survey_id<-gsub("-","",df_m$survey_id)
-df_m$survey_id<-gsub("_","",df_m$survey_id)
+df_m$survey_id =
+  paste0(
+  str_split_i(df_m$fileid,"_",1),"_",
+  str_split_i(df_m$fileid,"_",2),"_",
+  str_split_i(df_m$fileid,"_",4),"_",
+  gsub("h","",str_split_i(df_m$layer,"_",1)),
+  "00")
+
+#observer_id
+df_s$observer =
+  gsub(".gpkg","",str_split_i(df_s$fileid,"_",5))
+
+df_m$observer =
+  gsub(".gpkg","",str_split_i(df_m$fileid,"_",5))
 
 # row_id
-df_s$row_id <- paste(df_s$survey_id, ave(df_s$id,df_s$survey_id, FUN = seq_along), sep="")
-df_m$row_id <- paste(df_m$survey_id, ave(df_m$id,df_m$survey_id, FUN = seq_along), sep="")
+df_s$row_id <- paste(df_s$survey_id, ave(df_s$timestamp,df_s$survey_id, FUN = seq_along), sep="_")
+df_m$row_id <- paste(df_m$survey_id, ave(df_m$timestamp,df_m$survey_id, FUN = seq_along), sep="_")
 
 #tc
-df_s$tc <- substr(df_s$path,start=83,stop=87)
-df_s$tc<-gsub("-",":",df_s$tc)
-df_m$tc <- substr(df_m$path,start=83,stop=87)
-df_m$tc<-gsub("-",":",df_m$tc)
+df_s$tc = gsub("h",":",str_split_i(df_s$layer,"_",1))
+df_m$tc = gsub("h",":",str_split_i(df_m$layer,"_",1))
 
 ```
 
@@ -131,16 +150,52 @@ df_m$tc<-gsub("-",":",df_m$tc)
 ```{r}
 
 # Row_total
-df_s$row_total <- df_s$gender_male+df_s$gender_female
+df_s$row_total = df_s$gender_male+df_s$gender_female
+
+df_s$gender_unknown = 
+  ifelse(
+    df_s$row_total == 0,
+    df_s$age_0_14+df_s$age_15_24+df_s$age_25_44+df_s$age_45_64+df_s$age_65_74+df_s$age_75p,
+    df_s$gender_unknown
+    )
+
+df_s$row_total = 
+  ifelse(
+    df_s$row_total == 0,
+    df_s$age_0_14+df_s$age_15_24+df_s$age_25_44+df_s$age_45_64+df_s$age_65_74+df_s$age_75p,
+    df_s$row_total
+    )
+
+df_s = df_s %>% filter(row_total != 0)
+df_s = df_s %>% drop_na(activity)
+  
 df_m$row_total <- df_m$gender_male+df_m$gender_female
 
+df_m$gender_unknown = 
+  ifelse(
+    df_m$row_total == 0,
+    df_m$age_0_14+df_m$age_15_24+df_m$age_25_44+df_m$age_45_64+df_m$age_65_74+df_m$age_75p,
+    df_m$gender_unknown
+    )
+
+df_m$row_total = 
+  ifelse(
+    df_m$row_total == 0,
+    df_m$age_0_14+df_m$age_15_24+df_m$age_25_44+df_m$age_45_64+df_m$age_65_74+df_m$age_75p,
+    df_m$row_total
+    )
+
+df_m = df_m %>% filter(row_total != 0)
+df_m = df_m %>% drop_na(mouvement)
+
+
 # Mean age per group
-df_s$age_mean <- round(((df_s$age_0.14*7)+(df_s$age_15.24*19.5)+(df_s$age_25.44*34.5)+
-                                (df_s$age_45.64*54.5)+(df_s$age_65.74*69.5)+
+df_s$age_mean <- round(((df_s$age_0_14*7)+(df_s$age_15_24*19.5)+(df_s$age_25_44*34.5)+
+                                (df_s$age_45_64*54.5)+(df_s$age_65_74*69.5)+
                                 (df_s$age_75p*80))/df_s$row_total,digits = 1)
 
-df_m$age_mean <- round(((df_m$age_0.14*7)+(df_m$age_15.24*19.5)+(df_m$age_25.44*34.5)+
-                                (df_m$age_45.64*54.5)+(df_m$age_65.74*69.5)+
+df_m$age_mean <- round(((df_m$age_0_14*7)+(df_m$age_15_24*19.5)+(df_m$age_25_44*34.5)+
+                                (df_m$age_45_64*54.5)+(df_m$age_65_74*69.5)+
                                 (df_m$age_75p*80))/df_m$row_total,digits = 1)
 
 ```
@@ -148,21 +203,25 @@ df_m$age_mean <- round(((df_m$age_0.14*7)+(df_m$age_15.24*19.5)+(df_m$age_25.44*
 
 ## Separating columns of time & date from timestamp
 ```{r}
-df_s$timestamp <- gsub('T',' ',df_s$timestamp)
-df_s$timestamp <- substr(df_s$timestamp,start=1,stop=19)
-df_s$date <- format(as.POSIXct(strptime(df_s$timestamp,"%Y-%m-%d",tz="")),format = "%Y-%m-%d") # separate date column
-df_s$time <- format(as.POSIXct(strptime(df_s$timestamp,"%Y-%m-%d %H:%M:%S",tz="")) ,format = "%H:%M:%S") # separate time column
 
-df_m$timestamp <- gsub('T',' ',df_m$timestamp)
-df_m$timestamp <- substr(df_m$timestamp,start=1,stop=19)
-df_m$date <- format(as.POSIXct(strptime(df_m$timestamp,"%Y-%m-%d",tz="")),format = "%Y-%m-%d") # separate date column
-df_m$time <- format(as.POSIXct(strptime(df_m$timestamp,"%Y-%m-%d %H:%M:%S",tz="")) ,format = "%H:%M:%S") # separate time column
+df_s$date = as.Date(as.POSIXct(as.numeric(df_s$timestamp)/1000, origin="1970-01-01"))
+df_m$date = as.Date(as.POSIXct(as.numeric(df_m$timestamp)/1000, origin="1970-01-01"))
+
+df_s$time =
+  format(
+    as.POSIXct(as.numeric(df_s$timestamp)/1000, origin="1970-01-01", tz = "Europe/Berlin"),
+    format = "%H:%M:%S")
+
+df_m$time =
+  format(
+    as.POSIXct(as.numeric(df_m$timestamp)/1000, origin="1970-01-01", tz = "Europe/Berlin"),
+    format = "%H:%M:%S")
+
 ```
 
 
 ## Adding coordinates WGS84
 ```{r}
-library(sf)
 
 #conversion of points into spatial feature object 
 df_s_lb93 <- st_as_sf(df_s, coords = c("X_lb93", "Y_lb93"), crs = 2154, agr = "constant", remove = FALSE)
@@ -181,13 +240,24 @@ df_s$Y_wgs84 <- df_s_xy_wgs84[,2]
 
 ## Reorder dataframe
 ```{r}
-s.df <- df_s[,c("survey_id","row_id","timestamp","date","time","tc","X_lb93","Y_lb93","X_wgs84","Y_wgs84",
-                      "row_total","gender_male","gender_female","age_mean","age_0_7", "age_8_17","age_18_34","age_35_50","age_51_64","age_65",
-                      "posture","engagement","clothing","exposure","activity","mode","stay_time")]
 
-m.df <- df_m[,c("survey_id","row_id","timestamp","date","time","tc",
-                      "row_total","gender_male","gender_female","age_mean", "age_0_7", "age_8_17","age_18_34","age_35_50","age_51_64","age_65",
-                      "engagement","clothing","exposure","mouvement","mode")]
+df_s = df_s[,c(
+  "survey_id","row_id",
+  "timestamp","date","time","tc",
+  "X_lb93","Y_lb93","X_wgs84","Y_wgs84",
+  "row_total","gender_male","gender_female","gender_unknown",
+  "age_mean","age_0_14", "age_15_24","age_25_44","age_45_64","age_65_74","age_75p",
+  "posture","interaction","clothing","exposure","activity","stay_time",
+  "observer","layer","fileid","geom")]
+
+df_m = df_m[,c(
+  "survey_id","row_id",
+  "timestamp","date","time","tc",
+  "row_total","gender_male","gender_female","gender_unknown",
+  "age_mean","age_0_14", "age_15_24","age_25_44","age_45_64","age_65_74","age_75p",
+  "interaction","clothing","exposure","mouvement",
+  "observer","layer","fileid","geom")]
+
 ```
 
 
@@ -284,11 +354,11 @@ bck =
     data = map_df, aes(x = x, y =y), fill = rgb(r = map_df$red, g = map_df$green, b = map_df$blue, maxColorValue = 255),
     show.legend = FALSE)
 
-bck +
-#ggplot()+
+#bck +
+ggplot()+
   geom_sf(data=buildings, color = gray(0.5),size = 0.4)+
-  geom_sf(data=df_s, alpha = 0.2, color = "red")+
-  geom_sf(data=df_m, alpha = 0.2, color = "blue")+
+  geom_sf(data=df_s, size = df_s$row_total*0.75,alpha = 0.2, col = "red")+
+  geom_sf(data=df_m, size = df_m$row_total*0.75, alpha = 0.3, col = "blue")+
   geom_sf(data=zones, alpha = 1, color = "red",fill = NA, lty = 2, lwd = 5)+
   xlim(bbox[["xmin"]],bbox[["xmax"]])+
   ylim(bbox[["ymin"]],bbox[["ymax"]])+
