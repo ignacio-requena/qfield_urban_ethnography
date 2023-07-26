@@ -16,6 +16,7 @@ library(raster)
 library(prismatic)
 library(arulesCBA)
 library(tibble)
+library(osmdata)
 
 ```
 
@@ -105,7 +106,93 @@ map_df =
 
 bbox <- st_bbox(st_buffer(boundary,dist = 5, joinStyle="ROUND")) #global
 
+
+
 ```
+
+## openstreetmaps data
+```{r}
+
+# the bounding box, limiting what we fetch
+#bbox_osm =
+#  data.frame(min = c(bbox["xmin"],bbox["ymin"]),
+#             max = c(bbox["xmax"],bbox["ymax"]))
+#row.names(bbox_osm) = c("x","y")
+#bbox_osm = as.matrix(bbox_osm)  
+
+bbox_osm = getbb("nantes france", featuretype = "city")
+
+# tree
+map_tree <- bbox_osm %>% 
+  opq() %>% 
+  add_osm_feature(key = "natural", 
+                  value = "tree") %>% 
+  osmdata_sf()
+
+# jardins
+map_garden <- bbox_osm %>% 
+  opq() %>% 
+  add_osm_feature(key = "leisure", 
+                  value = c("garden","park")) %>% 
+  osmdata_sf()
+
+# jardins
+map_grass <- bbox_osm %>% 
+  opq() %>% 
+  add_osm_feature(key = "landuse", 
+                  value = "grass") %>% 
+  osmdata_sf()
+
+# fontaines
+map_eau <- bbox_osm %>% 
+  opq() %>% 
+  add_osm_feature(key = "natural", 
+                  value = "water") %>% 
+  osmdata_sf()
+
+#tramway
+map_tram <- bbox_osm %>% 
+  opq() %>% 
+  add_osm_feature(key = "electrified", 
+                  value = "contact_line") %>% 
+  osmdata_sf()
+
+#platform
+map_tram_platform <- bbox_osm %>% 
+  opq() %>% 
+  add_osm_feature(key = "public_transport", 
+                  value = "platform") %>% 
+  osmdata_sf()
+
+#building civic
+map_building_civic <- bbox_osm %>% 
+  opq() %>% 
+  add_osm_feature(key = "building", 
+                  value = "civic") %>% 
+  osmdata_sf()
+
+bbox_4326 = st_bbox(st_transform(st_as_sfc(bbox), 4326))
+
+
+ggplot() +
+  geom_sf(data = map_garden$osm_polygons, fill = "#9DBF9E", col = "#9DBF9E") +
+  geom_sf(data = map_grass$osm_polygons, fill = "#9DBF9E", col = "#9DBF9E") +
+  geom_sf(data = map_tram$osm_lines, lwd = 1, colour = "gray") +
+  geom_sf(data = map_tram_platform$osm_polygons, col = "gray") +
+  geom_sf(data = map_tree$osm_points, size = 0.5, col = "#4A6C6F") +
+  geom_sf(data = map_eau$osm_polygons, fill = "#9DDBFF", col = "#9DDBFF") +
+  geom_sf(data = st_transform(buildings, 4326), col = "black", fill = "black") +
+  geom_sf(data = map_building_civic$osm_polygons, col = "black", fill = "black") +
+  xlim(bbox_4326[["xmin"]],bbox_4326[["xmax"]])+
+  ylim(bbox_4326[["ymin"]],bbox_4326[["ymax"]])+
+  theme_bw()
+  
+  
+
+```
+
+
+
 
 #Data organisation
 
@@ -261,6 +348,14 @@ df_m = df_m[,c(
 ```
 
 
+```{r}
+
+df_s_4326 =  st_transform(df_s, 4326)
+df_m_4326 =  st_transform(df_m, 4326)
+
+```
+
+
 # Spatial aggregation
 
 ## mesh
@@ -347,48 +442,64 @@ theme_carto <-
 
 bck =
   ggplot() +
-  geom_raster(
-    data = basemap_df, aes(x = x, y =y), fill = rgb(r = basemap_df$red, g = basemap_df$green, b = basemap_df$blue, maxColorValue = 255),
-    show.legend = FALSE)+
-  geom_raster(
-    data = map_df, aes(x = x, y =y), fill = rgb(r = map_df$red, g = map_df$green, b = map_df$blue, maxColorValue = 255),
-    show.legend = FALSE)
+    geom_sf(data = map_garden$osm_polygons, fill = "#9DBF9E", col = "#9DBF9E") +
+    geom_sf(data = map_grass$osm_polygons, fill = "#9DBF9E", col = "#9DBF9E") +
+    geom_sf(data = map_tram$osm_lines, lwd = 1, colour = "grey70") +
+    geom_sf(data = map_tram_platform$osm_polygons, col = "grey70") +
+    geom_sf(data = map_tree$osm_points, size = 0.5, col = "#4A6C6F") +
+    geom_sf(data = map_eau$osm_polygons, fill = "#9DDBFF", col = "#9DDBFF") +
+    geom_sf(data = map_building_civic$osm_polygons, col = "grey25", fill = "grey25") +
+    geom_sf(data = st_transform(buildings, 4326), col = "grey25", fill = "grey25")
+  
+#  geom_raster(
+#    data = basemap_df, aes(x = x, y =y), fill = rgb(r = basemap_df$red, g = basemap_df$green, b = basemap_df$blue, maxColorValue = 255),
+#    show.legend = FALSE)+
+#  geom_raster(
+#    data = map_df, aes(x = x, y =y), fill = rgb(r = map_df$red, g = map_df$green, b = map_df$blue, maxColorValue = 255),
+#    show.legend = FALSE)
 
-#bck +
-ggplot()+
-  geom_sf(data=buildings, color = gray(0.5),size = 0.4)+
-  geom_sf(data=df_s, size = df_s$row_total*0.75,alpha = 0.2, col = "red")+
-  geom_sf(data=df_m, size = df_m$row_total*0.75, alpha = 0.3, col = "blue")+
-  geom_sf(data=zones, alpha = 1, color = "red",fill = NA, lty = 2, lwd = 5)+
-  xlim(bbox[["xmin"]],bbox[["xmax"]])+
-  ylim(bbox[["ymin"]],bbox[["ymax"]])+
+m = st_transform(df_m, 4326)
+z = st_transform(zones, 4326)
+#m = st_intersection(m,z)
+s = st_transform(df_s, 4326)
+#s = st_intersection(s,z)
+m_hb = st_transform(hexbin_m, 4326)
+s_hb = st_transform(hexbin_s, 4326)
+g_hb = st_transform(grid, 4326)
+
+
+bck +
+#ggplot()+
+  geom_sf(data = m, lwd = 0.4, alpha = 0.1, col = "black")+
+  geom_sf(data = s, size = 0.4,alpha = 0.5, col = "black")+
+  #geom_sf(data = z, alpha = 1, color = "red",fill = NA, lty = 1, lwd = 0.3)+
+  xlim(bbox_4326[["xmin"]],bbox_4326[["xmax"]])+
+  ylim(bbox_4326[["ymin"]],bbox_4326[["ymax"]])+
   theme_carto
 
-ggsave(here("outcomes","all.jpg"))
+ggsave(here("outcomes","all.jpg"), width = 3000, height = 3000, units = "px", dpi = 300)
 
 bck +
 #ggplot()+  
-  geom_sf(data=grid, color = gray(0.5),size = 0.1, fill = NA)+
-  geom_sf(data=buildings, color = gray(0.5),size = 0.4)+
-  geom_sf(data=hexbin_s, aes(fill = nbp,alpha = nbp))+
+  geom_sf(data=g_hb, color = gray(0.5),size = 0.1, fill = NA)+
+  geom_sf(data=s_hb, aes(fill = nbp,alpha = nbp))+
   #geom_sf(data=df_m, alpha = 0.2, color = "blue")+
-  xlim(bbox[["xmin"]],bbox[["xmax"]])+
-  ylim(bbox[["ymin"]],bbox[["ymax"]])+
+  xlim(bbox_4326[["xmin"]],bbox_4326[["xmax"]])+
+  ylim(bbox_4326[["ymin"]],bbox_4326[["ymax"]])+
   theme_carto
 
 ggsave(here("outcomes","hex_staying.jpg"))
 
 bck +
 #ggplot()+  
-  geom_sf(data=grid, color = gray(0.5),size = 0.1, fill = NA)+
-  geom_sf(data=buildings, color = gray(0.5),size = 0.4)+
-  geom_sf(data=hexbin_m, aes(fill = nbp, alpha = nbp))+
+  geom_sf(data=g_hb, color = gray(0.5),size = 0.1, fill = NA)+
+  geom_sf(data=m_hb, aes(fill = nbp, alpha = nbp))+
   #geom_sf(data=df_m, alpha = 0.2, color = "blue")+
-  xlim(bbox[["xmin"]],bbox[["xmax"]])+
-  ylim(bbox[["ymin"]],bbox[["ymax"]])+
+  xlim(bbox_4326[["xmin"]],bbox_4326[["xmax"]])+
+  ylim(bbox_4326[["ymin"]],bbox_4326[["ymax"]])+
   theme_carto
 
-ggsave(here("outcomes","hex_moving.jpg"))
+#ggsave(here("outcomes","hex_moving.jpg"))
 
 ```
 
