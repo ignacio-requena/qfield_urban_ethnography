@@ -120,7 +120,11 @@ bbox <- st_bbox(st_buffer(boundary,dist = 5, joinStyle="ROUND")) #global
 #row.names(bbox_osm) = c("x","y")
 #bbox_osm = as.matrix(bbox_osm)  
 
-bbox_osm = getbb("nantes france", featuretype = "city")
+bbox_osm = 
+  getbb(
+    place_name = "Nantes",
+    featuretype = "city"
+    )
 
 # tree
 map_tree <- bbox_osm %>% 
@@ -348,6 +352,24 @@ df_m = df_m[,c(
 ```
 
 
+## Export GPKG
+```{r}
+
+st_write(df_s, 
+         dsn=here("outcomes","obs.gpkg"),
+         layer='staying',
+         append=FALSE,
+         layer_options = "OVERWRITE=YES")
+
+st_write(df_m, 
+         dsn=here("outcomes","obs.gpkg"),
+         layer='moving',
+         append=FALSE,
+         layer_options = "OVERWRITE=YES")
+
+```
+
+
 ```{r}
 
 df_s_4326 =  st_transform(df_s, 4326)
@@ -394,6 +416,8 @@ hexbin_s =
   group_by(id,fileid) %>%
   summarise(
     n = n(),
+    date = first(date),
+    time = first(tc),
     nbp = sum(row_total),
     gender_male = sum(gender_male),
     gender_female = sum(gender_female))
@@ -407,6 +431,8 @@ hexbin_m =
   group_by(id,fileid) %>%
   summarise(
     n = n(),
+    date = first(date),
+    time = first(tc),
     nbp = sum(row_total),
     gender_male = sum(gender_male),
     gender_female = sum(gender_female))
@@ -432,7 +458,9 @@ theme_carto <-
     #panel.border=element_blank(),
     panel.grid.major=element_blank(),
     panel.grid.minor=element_blank(),
-    plot.background=element_blank()
+    plot.background=element_blank(),
+    strip.background=element_rect(fill="black"),
+    strip.text = element_text(colour = 'white')
     )
 
 ```
@@ -447,9 +475,7 @@ bck =
     geom_sf(data = map_tram$osm_lines, lwd = 1, colour = "grey70") +
     geom_sf(data = map_tram_platform$osm_polygons, col = "grey70") +
     geom_sf(data = map_tree$osm_points, size = 0.5, col = "#4A6C6F") +
-    geom_sf(data = map_eau$osm_polygons, fill = "#9DDBFF", col = "#9DDBFF") +
-    geom_sf(data = map_building_civic$osm_polygons, col = "grey25", fill = "grey25") +
-    geom_sf(data = st_transform(buildings, 4326), col = "grey25", fill = "grey25")
+    geom_sf(data = map_eau$osm_polygons, fill = "#9DDBFF", col = "#9DDBFF")
   
 #  geom_raster(
 #    data = basemap_df, aes(x = x, y =y), fill = rgb(r = basemap_df$red, g = basemap_df$green, b = basemap_df$blue, maxColorValue = 255),
@@ -472,34 +498,53 @@ bck +
 #ggplot()+
   geom_sf(data = m, lwd = 0.4, alpha = 0.1, col = "black")+
   geom_sf(data = s, size = 0.4,alpha = 0.5, col = "black")+
-  #geom_sf(data = z, alpha = 1, color = "red",fill = NA, lty = 1, lwd = 0.3)+
+  geom_sf(data = map_building_civic$osm_polygons, col = "grey25", fill = "grey25") +
+  geom_sf(data = st_transform(buildings, 4326), col = "grey25", fill = "grey25")+
   xlim(bbox_4326[["xmin"]],bbox_4326[["xmax"]])+
   ylim(bbox_4326[["ymin"]],bbox_4326[["ymax"]])+
   theme_carto
 
-ggsave(here("outcomes","all.jpg"), width = 3000, height = 3000, units = "px", dpi = 300)
+ggsave(here("outcomes","all.jpg"), width = 3000, height = 2000, units = "px", dpi = 200)
 
 bck +
-#ggplot()+  
-  geom_sf(data=g_hb, color = gray(0.5),size = 0.1, fill = NA)+
-  geom_sf(data=s_hb, aes(fill = nbp,alpha = nbp))+
-  #geom_sf(data=df_m, alpha = 0.2, color = "blue")+
+  geom_sf(data=s_hb, aes(fill = nbp),color = NA)+
+  geom_sf(data=g_hb, col = alpha("#757575",0.1),size = 0.01, fill = NA)+
+  scale_fill_continuous(type = "viridis",direction = -1)+
+  geom_sf(data = map_building_civic$osm_polygons, col = "grey25", fill = "grey25") +
+  geom_sf(data = st_transform(buildings, 4326), col = "grey25", fill = "grey25")+
   xlim(bbox_4326[["xmin"]],bbox_4326[["xmax"]])+
   ylim(bbox_4326[["ymin"]],bbox_4326[["ymax"]])+
-  theme_carto
+  theme_carto+
+  facet_grid(
+    rows = vars(time),
+    cols = vars(date)
+  ) +
+  ggtitle("Situations statiques")
+  #theme(legend.position="top")
 
-ggsave(here("outcomes","hex_staying.jpg"))
+ggsave(
+  here("outcomes","hex_staying.jpg"),
+  width = 6000, height = 4000, units = "px", dpi = 200)
 
 bck +
-#ggplot()+  
-  geom_sf(data=g_hb, color = gray(0.5),size = 0.1, fill = NA)+
-  geom_sf(data=m_hb, aes(fill = nbp, alpha = nbp))+
-  #geom_sf(data=df_m, alpha = 0.2, color = "blue")+
+  geom_sf(data=m_hb, aes(fill = nbp),color = NA)+
+  geom_sf(data=g_hb, col = alpha("#757575",0.1),size = 0.01,fill = NA)+
+  scale_fill_continuous(type = "viridis",direction = -1)+
+  #scale_fill_gradient(low = "#D7E7FE", high = "#02193B")+
+  geom_sf(data = map_building_civic$osm_polygons, col = "grey25", fill = "grey25") +
+  geom_sf(data = st_transform(buildings, 4326), col = "grey25", fill = "grey25")+
   xlim(bbox_4326[["xmin"]],bbox_4326[["xmax"]])+
   ylim(bbox_4326[["ymin"]],bbox_4326[["ymax"]])+
-  theme_carto
+  ggtitle("Situations en mouvement")+
+  theme_carto+
+  facet_grid(
+    rows = vars(time),
+    cols = vars(date)
+  )
 
-#ggsave(here("outcomes","hex_moving.jpg"))
+ggsave(
+  here("outcomes","hex_moving.jpg"),
+  width = 6000, height = 4000, units = "px", dpi = 200)
 
 ```
 
