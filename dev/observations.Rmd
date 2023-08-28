@@ -4,6 +4,7 @@ output: html_notebook
 ---
 
 # Libraries
+
 ```{r}
 
 library(here)
@@ -21,9 +22,7 @@ library(osmdata)
 ```
 
 
-# Import data
-
-## observations
+# Observation data
 ```{r}
 
 filenames <- list.files(here("source"),pattern="*.gpkg$")
@@ -61,144 +60,19 @@ rm(filename)
 
 }
 
-df_s = rbindlist(list_s,use.names = FALSE) %>% st_as_sf()
+df_s = rbindlist(list_s,use.names = FALSE) %>% as.data.frame() %>% st_as_sf()
+df_s = df_s %>% rename_with(~ gsub(".", "_", .x, fixed = TRUE))
+df_s = df_s[!(is.na(df_s$activity)), ]
 df_s %>% ggplot() + geom_sf()
-df_m = rbindlist(list_m,use.names = FALSE) %>% st_as_sf()
+
+df_m = rbindlist(list_m,use.names = FALSE) %>% as.data.frame() %>% st_as_sf()
+df_m = df_m %>% rename_with(~ gsub(".", "_", .x, fixed = TRUE))
+df_m = df_m[!(is.na(df_m$mouvement)), ]
 df_m %>% ggplot() + geom_sf()
 
-df_s = df_s %>% 
-  rename_with(~ gsub(".", "_", .x, fixed = TRUE))
-
-df_m = df_m %>% 
-  rename_with(~ gsub(".", "_", .x, fixed = TRUE))
 
 ```
 
-## context
-```{r}
-
-buildings <- read_sf(here("source","geom","context.gpkg"),"buildings")
-plot(buildings)
-boundary = read_sf(here("source","geom","context.gpkg"),"perimetre") %>% slice(1)
-plot(boundary)
-zones = read_sf(here("source","geom","context.gpkg"),"zones")
-plot(zones)
-track = read_sf(here("source","geom","track.gpkg"),"track3")
-plot(track)
-
-basemap = stack(here("source","geom","basemap.tif"))
-basemap_df = as.data.frame(basemap, xy= TRUE)
-basemap_df = 
-  basemap_df %>% 
-  rename(red = basemap_1, #Rename bands
-         green = basemap_2,
-         blue = basemap_3) %>%
-  filter(red != 0) #drop data w/o rgb information
-
-map = stack(here("source","geom","map_georeferenced_clip.tif"))
-map_df = as.data.frame(map, xy= TRUE)
-map_df = 
-  map_df %>% 
-  rename(red = map_georeferenced_clip_1, #Rename bands
-         green = map_georeferenced_clip_2,
-         blue = map_georeferenced_clip_3) %>%
-  filter(red != 0) #drop data w/o rgb information
-
-bbox <- st_bbox(st_buffer(boundary,dist = 5, joinStyle="ROUND")) #global
-
-
-
-```
-
-## openstreetmaps data
-```{r}
-
-# the bounding box, limiting what we fetch
-#bbox_osm =
-#  data.frame(min = c(bbox["xmin"],bbox["ymin"]),
-#             max = c(bbox["xmax"],bbox["ymax"]))
-#row.names(bbox_osm) = c("x","y")
-#bbox_osm = as.matrix(bbox_osm)  
-
-bbox_osm = 
-  getbb(
-    place_name = "Nantes",
-    featuretype = "city"
-    )
-
-# tree
-map_tree <- bbox_osm %>% 
-  opq() %>% 
-  add_osm_feature(key = "natural", 
-                  value = "tree") %>% 
-  osmdata_sf()
-
-# jardins
-map_garden <- bbox_osm %>% 
-  opq() %>% 
-  add_osm_feature(key = "leisure", 
-                  value = c("garden","park")) %>% 
-  osmdata_sf()
-
-# jardins
-map_grass <- bbox_osm %>% 
-  opq() %>% 
-  add_osm_feature(key = "landuse", 
-                  value = "grass") %>% 
-  osmdata_sf()
-
-# fontaines
-map_eau <- bbox_osm %>% 
-  opq() %>% 
-  add_osm_feature(key = "natural", 
-                  value = "water") %>% 
-  osmdata_sf()
-
-#tramway
-map_tram <- bbox_osm %>% 
-  opq() %>% 
-  add_osm_feature(key = "electrified", 
-                  value = "contact_line") %>% 
-  osmdata_sf()
-
-#platform
-map_tram_platform <- bbox_osm %>% 
-  opq() %>% 
-  add_osm_feature(key = "public_transport", 
-                  value = "platform") %>% 
-  osmdata_sf()
-
-#building civic
-map_building_civic <- bbox_osm %>% 
-  opq() %>% 
-  add_osm_feature(key = "building", 
-                  value = "civic") %>% 
-  osmdata_sf()
-
-bbox_4326 = st_bbox(st_transform(st_as_sfc(bbox), 4326))
-
-
-ggplot() +
-  geom_sf(data = map_garden$osm_polygons, fill = "#9DBF9E", col = "#9DBF9E") +
-  geom_sf(data = map_grass$osm_polygons, fill = "#9DBF9E", col = "#9DBF9E") +
-  geom_sf(data = map_tram$osm_lines, lwd = 1, colour = "gray") +
-  geom_sf(data = map_tram_platform$osm_polygons, col = "gray") +
-  geom_sf(data = map_tree$osm_points, size = 0.5, col = "#4A6C6F") +
-  geom_sf(data = map_eau$osm_polygons, fill = "#9DDBFF", col = "#9DDBFF") +
-  geom_sf(data = st_transform(buildings, 4326), col = "black", fill = "black") +
-  geom_sf(data = map_building_civic$osm_polygons, col = "black", fill = "black") +
-  xlim(bbox_4326[["xmin"]],bbox_4326[["xmax"]])+
-  ylim(bbox_4326[["ymin"]],bbox_4326[["ymax"]])+
-  theme_bw()
-  
-  
-
-```
-
-
-
-
-#Data organisation
 
 ## IDs
 ```{r}
@@ -352,35 +226,282 @@ df_m = df_m[,c(
 ```
 
 
-## Export GPKG
+## clean
 ```{r}
 
-st_write(df_s, 
-         dsn=here("outcomes","obs.gpkg"),
-         layer='staying',
-         append=FALSE,
-         layer_options = "OVERWRITE=YES")
-
-st_write(df_m, 
-         dsn=here("outcomes","obs.gpkg"),
-         layer='moving',
-         append=FALSE,
-         layer_options = "OVERWRITE=YES")
+rm(df_s_lb93)
+rm(df_s_wgs84)
+rm(df_s_xy_wgs84)
+rm(list_s)
+rm(list_m)
 
 ```
 
 
+## CRS coordinates and definition
 ```{r}
+
+df_s_2154 =  df_s
+df_m_2154 =  df_m
 
 df_s_4326 =  st_transform(df_s, 4326)
 df_m_4326 =  st_transform(df_m, 4326)
 
+# definie the CRS to use in the subsequent scripts
+df_s = df_s_4326
+df_m = df_m_4326
+
 ```
 
 
-# Spatial aggregation
+## Export .gpkg files
+```{r}
 
-## mesh
+st_write(df_s_2154, 
+         dsn=here("outcomes","obs_2154.gpkg"),
+         layer='staying',
+         append=FALSE,
+         layer_options = "OVERWRITE=YES")
+
+st_write(df_s_4326, 
+         dsn=here("outcomes","obs_4326.gpkg"),
+         layer='staying',
+         append=FALSE,
+         layer_options = "OVERWRITE=YES")
+
+st_write(df_m_2154, 
+         dsn=here("outcomes","obs_2154.gpkg"),
+         layer='moving',
+         append=FALSE,
+         layer_options = "OVERWRITE=YES")
+
+st_write(df_m_4326, 
+         dsn=here("outcomes","obs_4326.gpkg"),
+         layer='moving',
+         append=FALSE,
+         layer_options = "OVERWRITE=YES")
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+
+# Plots preparation
+
+## context
+```{r}
+
+buildings <- read_sf(here("source","geom","context.gpkg"),"buildings")
+buildings = st_transform(buildings, 4326)
+plot(buildings)
+
+boundary = read_sf(here("source","geom","context.gpkg"),"perimetre") %>% slice(1)
+boundary = st_transform(boundary, 4326)
+plot(boundary)
+
+zones = read_sf(here("source","geom","context.gpkg"),"zones")
+zones = st_transform(zones, 4326)
+plot(zones)
+
+track = read_sf(here("source","geom","track.gpkg"),"track3")
+track = st_transform(track, 4326)
+plot(track)
+
+basemap = stack(here("source","geom","basemap.tif"))
+basemap_df = as.data.frame(basemap, xy= TRUE)
+basemap_df = 
+  basemap_df %>% 
+  rename(red = basemap_1, #Rename bands
+         green = basemap_2,
+         blue = basemap_3) %>%
+  filter(red != 0) #drop data w/o rgb information
+
+map = stack(here("source","geom","map_georeferenced_clip.tif"))
+map_df = as.data.frame(map, xy= TRUE)
+map_df = 
+  map_df %>% 
+  rename(red = map_georeferenced_clip_1, #Rename bands
+         green = map_georeferenced_clip_2,
+         blue = map_georeferenced_clip_3) %>%
+  filter(red != 0) #drop data w/o rgb information
+
+bbox = st_bbox(st_buffer(boundary,dist = 0, joinStyle="ROUND")) #global
+
+```
+
+
+## openstreetmaps data
+```{r}
+
+# the bounding box, limiting what we fetch
+#bbox_osm =
+#  data.frame(min = c(bbox["xmin"],bbox["ymin"]),
+#             max = c(bbox["xmax"],bbox["ymax"]))
+#row.names(bbox_osm) = c("x","y")
+#bbox_osm = as.matrix(bbox_osm)  
+
+bbox_osm = 
+  getbb(
+    place_name = "Nantes",
+    featuretype = "city"
+    )
+
+# tree
+map_tree <- bbox_osm %>% 
+  opq() %>% 
+  add_osm_feature(key = "natural", 
+                  value = "tree") %>% 
+  osmdata_sf()
+
+# jardins
+map_garden <- bbox_osm %>% 
+  opq() %>% 
+  add_osm_feature(key = "leisure", 
+                  value = c("garden","park")) %>% 
+  osmdata_sf()
+
+# jardins
+map_grass <- bbox_osm %>% 
+  opq() %>% 
+  add_osm_feature(key = "landuse", 
+                  value = "grass") %>% 
+  osmdata_sf()
+
+# fontaines
+map_eau <- bbox_osm %>% 
+  opq() %>% 
+  add_osm_feature(key = "natural", 
+                  value = "water") %>% 
+  osmdata_sf()
+
+#tramway
+map_tram <- bbox_osm %>% 
+  opq() %>% 
+  add_osm_feature(key = "electrified", 
+                  value = "contact_line") %>% 
+  osmdata_sf()
+
+#platform
+map_tram_platform <- bbox_osm %>% 
+  opq() %>% 
+  add_osm_feature(key = "public_transport", 
+                  value = "platform") %>% 
+  osmdata_sf()
+
+#building civic
+map_building_civic <- bbox_osm %>% 
+  opq() %>% 
+  add_osm_feature(key = "building", 
+                  value = "civic") %>% 
+  osmdata_sf()
+
+bbox_4326 = st_bbox(st_transform(st_as_sfc(bbox), 4326))
+
+
+ggplot() +
+  geom_sf(data = map_garden$osm_polygons, fill = "#9DBF9E", col = "#9DBF9E") +
+  geom_sf(data = map_grass$osm_polygons, fill = "#9DBF9E", col = "#9DBF9E") +
+  geom_sf(data = map_tram$osm_lines, lwd = 1, colour = "gray") +
+  geom_sf(data = map_tram_platform$osm_polygons, col = "gray") +
+  geom_sf(data = map_tree$osm_points, size = 0.5, col = "#4A6C6F") +
+  geom_sf(data = map_eau$osm_polygons, fill = "#9DDBFF", col = "#9DDBFF") +
+  geom_sf(data = st_transform(buildings, 4326), col = "black", fill = "black") +
+  geom_sf(data = map_building_civic$osm_polygons, col = "black", fill = "black") +
+  xlim(bbox_4326[["xmin"]],bbox_4326[["xmax"]])+
+  ylim(bbox_4326[["ymin"]],bbox_4326[["ymax"]])+
+  theme_bw()
+  
+  
+```
+
+
+## theme
+```{r}
+
+theme_carto <-
+  theme_bw() +
+  theme(
+    #axis.line=element_blank(),
+    axis.text.x=element_blank(),
+    axis.text.y=element_blank(),
+    axis.ticks=element_blank(),
+    axis.title.x=element_blank(),
+    axis.title.y=element_blank(),
+    #legend.position="none",
+    panel.background=element_blank(),
+    #panel.border=element_blank(),
+    panel.grid.major=element_blank(),
+    panel.grid.minor=element_blank(),
+    plot.background=element_blank(),
+    strip.background=element_rect(fill="black"),
+    strip.text = element_text(colour = 'white')
+    )
+
+```
+
+
+## background layer
+```{r}
+bck =
+  ggplot() +
+    geom_sf(data = map_garden$osm_polygons, fill = "#9DBF9E", col = "#9DBF9E") +
+    geom_sf(data = map_grass$osm_polygons, fill = "#9DBF9E", col = "#9DBF9E") +
+    geom_sf(data = map_tram$osm_lines, lwd = 1, colour = "grey70") +
+    geom_sf(data = map_tram_platform$osm_polygons, col = "grey70") +
+    geom_sf(data = map_tree$osm_points, size = 0.5, col = "#4A6C6F") +
+    geom_sf(data = map_eau$osm_polygons, fill = "#9DDBFF", col = "#9DDBFF")
+  
+#  geom_raster(
+#    data = basemap_df, aes(x = x, y =y), fill = rgb(r = basemap_df$red, g = basemap_df$green, b = basemap_df$blue, maxColorValue = 255),
+#    show.legend = FALSE)+
+#  geom_raster(
+#    data = map_df, aes(x = x, y =y), fill = rgb(r = map_df$red, g = map_df$green, b = map_df$blue, maxColorValue = 255),
+#    show.legend = FALSE)
+```
+
+
+## dataframes naming
+```{r}
+
+m = df_m
+z = zones
+#m = st_intersection(m,z)
+s = df_s
+#s = st_intersection(s,z)
+
+```
+
+
+# Plots
+
+## Single observations
+```{r}
+bck +
+#ggplot()+
+  geom_sf(data = m, lwd = 0.4, col = "black", alpha = 0.1)+
+  geom_sf(data = s, alpha = 0.5, col = "black", shape = 3, aes(size = row_total/2))+
+  geom_sf(data = map_tree$osm_points, size = 1, col = "#4A6C6F") +
+  geom_sf(data = map_building_civic$osm_polygons, col = "grey25", fill = "grey25") +
+  geom_sf(data = st_transform(buildings, 4326), col = "grey25", fill = "grey25")+
+  xlim(bbox_4326[["xmin"]],bbox_4326[["xmax"]])+
+  ylim(bbox_4326[["ymin"]],bbox_4326[["ymax"]])+
+  theme_carto+
+  theme(legend.position = "none")
+
+ggsave(here("outcomes","plot_obs.jpg"), width = 3000, height = 2000, units = "px", dpi = 200)
+
+```
+
+
+## Hexbins by id & fileid
+
 ```{r}
 
 grid = 
@@ -402,11 +523,7 @@ grid = grid %>%
   
 plot(grid)
 
-```
 
-
-## aggregation
-```{r}
 hexbin_s =
   st_join(
     grid,
@@ -437,74 +554,14 @@ hexbin_m =
     gender_male = sum(gender_male),
     gender_female = sum(gender_female))
 
-```
-
-
-# Plot
-
-```{r}
-
-theme_carto <-
-  theme_bw() +
-  theme(
-    #axis.line=element_blank(),
-    axis.text.x=element_blank(),
-    axis.text.y=element_blank(),
-    axis.ticks=element_blank(),
-    axis.title.x=element_blank(),
-    axis.title.y=element_blank(),
-    #legend.position="none",
-    panel.background=element_blank(),
-    #panel.border=element_blank(),
-    panel.grid.major=element_blank(),
-    panel.grid.minor=element_blank(),
-    plot.background=element_blank(),
-    strip.background=element_rect(fill="black"),
-    strip.text = element_text(colour = 'white')
-    )
+m_hb = hexbin_m
+s_hb = hexbin_s
+g_hb = grid
 
 ```
 
 
 ```{r}
-
-bck =
-  ggplot() +
-    geom_sf(data = map_garden$osm_polygons, fill = "#9DBF9E", col = "#9DBF9E") +
-    geom_sf(data = map_grass$osm_polygons, fill = "#9DBF9E", col = "#9DBF9E") +
-    geom_sf(data = map_tram$osm_lines, lwd = 1, colour = "grey70") +
-    geom_sf(data = map_tram_platform$osm_polygons, col = "grey70") +
-    geom_sf(data = map_tree$osm_points, size = 0.5, col = "#4A6C6F") +
-    geom_sf(data = map_eau$osm_polygons, fill = "#9DDBFF", col = "#9DDBFF")
-  
-#  geom_raster(
-#    data = basemap_df, aes(x = x, y =y), fill = rgb(r = basemap_df$red, g = basemap_df$green, b = basemap_df$blue, maxColorValue = 255),
-#    show.legend = FALSE)+
-#  geom_raster(
-#    data = map_df, aes(x = x, y =y), fill = rgb(r = map_df$red, g = map_df$green, b = map_df$blue, maxColorValue = 255),
-#    show.legend = FALSE)
-
-m = st_transform(df_m, 4326)
-z = st_transform(zones, 4326)
-#m = st_intersection(m,z)
-s = st_transform(df_s, 4326)
-#s = st_intersection(s,z)
-m_hb = st_transform(hexbin_m, 4326)
-s_hb = st_transform(hexbin_s, 4326)
-g_hb = st_transform(grid, 4326)
-
-
-bck +
-#ggplot()+
-  geom_sf(data = m, lwd = 0.4, alpha = 0.1, col = "black")+
-  geom_sf(data = s, size = 0.4,alpha = 0.5, col = "black")+
-  geom_sf(data = map_building_civic$osm_polygons, col = "grey25", fill = "grey25") +
-  geom_sf(data = st_transform(buildings, 4326), col = "grey25", fill = "grey25")+
-  xlim(bbox_4326[["xmin"]],bbox_4326[["xmax"]])+
-  ylim(bbox_4326[["ymin"]],bbox_4326[["ymax"]])+
-  theme_carto
-
-ggsave(here("outcomes","all.jpg"), width = 3000, height = 2000, units = "px", dpi = 200)
 
 bck +
   geom_sf(data=s_hb, aes(fill = nbp),color = NA)+
@@ -523,8 +580,9 @@ bck +
   #theme(legend.position="top")
 
 ggsave(
-  here("outcomes","hex_staying.jpg"),
+  here("outcomes","plot_obs_staying_atlas.jpg"),
   width = 6000, height = 4000, units = "px", dpi = 200)
+
 
 bck +
   geom_sf(data=m_hb, aes(fill = nbp),color = NA)+
@@ -543,8 +601,35 @@ bck +
   )
 
 ggsave(
-  here("outcomes","hex_moving.jpg"),
+  here("outcomes","plot_obs_moving_atlas.jpg"),
   width = 6000, height = 4000, units = "px", dpi = 200)
+
+```
+
+
+#Leaflet
+```{r}
+
+library(magrittr)
+library(leaflet)
+
+leaflet() %>%
+  addCircles(data = df_s_4326,
+             lng = ~X_wgs84,
+             lat = ~Y_wgs84,
+             weight = 1,
+             radius = ~row_total/3,
+             color = "red") %>%
+  addPolylines(data = df_m_4326,
+               opacity = 0.2,
+               weight = 1,
+               color = "blue") %>%
+  addTiles() %>%
+  addProviderTiles(providers$OpenStreetMap.BlackAndWhite) %>%
+  addLayersControl(
+    overlayGroups = unique(df_s_4326$survey_id),
+    options = layersControlOptions(collapsed = FALSE)
+  )
 
 ```
 
