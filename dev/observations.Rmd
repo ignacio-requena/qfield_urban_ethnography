@@ -18,6 +18,10 @@ library(prismatic)
 library(arulesCBA)
 library(tibble)
 library(osmdata)
+library(wesanderson)
+library(ggpubr)
+library(kableExtra)
+library(magick)
 
 ```
 
@@ -453,10 +457,19 @@ bck =
   ggplot() +
     geom_sf(data = map_garden$osm_polygons, fill = "#9DBF9E", col = "#9DBF9E") +
     geom_sf(data = map_grass$osm_polygons, fill = "#9DBF9E", col = "#9DBF9E") +
-    geom_sf(data = map_tram$osm_lines, lwd = 1, colour = "grey70") +
+    geom_sf(data = map_tram$osm_lines, lwd = 1, col = "grey70") +
     geom_sf(data = map_tram_platform$osm_polygons, col = "grey70") +
     geom_sf(data = map_tree$osm_points, size = 0.5, col = "#4A6C6F") +
     geom_sf(data = map_eau$osm_polygons, fill = "#9DDBFF", col = "#9DDBFF")
+
+bck_atlas =
+  ggplot() +
+    geom_sf(data = map_garden$osm_polygons, fill = "grey70", col = "grey70") +
+    geom_sf(data = map_grass$osm_polygons, fill = "grey70", col = "grey70") +
+    geom_sf(data = map_tram$osm_lines, lwd = 1, col = "grey80") +
+    geom_sf(data = map_tram_platform$osm_polygons, col = "grey80") +
+    geom_sf(data = map_tree$osm_points, size = 0.2, col = "grey30") +
+    geom_sf(data = map_eau$osm_polygons, fill = "grey50", col = "grey50")
   
 #  geom_raster(
 #    data = basemap_df, aes(x = x, y =y), fill = rgb(r = basemap_df$red, g = basemap_df$green, b = basemap_df$blue, maxColorValue = 255),
@@ -479,6 +492,286 @@ s = df_s
 ```
 
 
+# Statistique
+
+## Resume
+```{r}
+
+bcs_sum_s =
+df_s %>%
+  mutate(
+    time = as.POSIXct(time,format="%H:%M:%S", tz="Europe/Paris")
+  ) %>%
+  group_by(survey_id) %>%
+  summarise(
+    date = first(date),
+    heure = first(tc),
+    #start = first(time),
+    #end = last(time),
+    duration = as.numeric(last(time)-first(time)),
+    observers = n_distinct(observer),
+    observations = n(),
+    nbp = sum(row_total),
+    age_mean = mean(age_mean),
+    gender_female = sum(gender_female)/nbp,
+    gender_male = sum(gender_male)/nbp
+    ) %>%
+  mutate_if(is.numeric, round, digits=1) %>%
+  mutate(
+    tair_mf = c(24.9,29.3,29.7,25.0, #14/6/2023
+                20.0,25.9,25.2,21.8, #15/6/2023
+                27.2,30.2,31.7,30.6, #24/6/2023
+                21.4,25.3,26.9,25.5, #10/7/2023
+                25.2,28.0,26.3,22.1, #18/7/2023
+                24.3,28.9,29.9,27.2, #21/8/2023
+                24.0,28.5,31.0,28.6, #22/8/2023
+                22.7,30.6,34.6,31.7 #23/8/2023
+                )
+  ) %>%
+  #dplyr::select(-survey_id) %>%
+  st_drop_geometry()
+
+
+bcs_sum_m =
+df_m %>%
+  mutate(
+    time = as.POSIXct(time,format="%H:%M:%S", tz="Europe/Paris")
+  ) %>%
+  group_by(survey_id) %>%
+  summarise(
+    date = first(date),
+    heure = first(tc),
+    #start = first(time),
+    #end = last(time),
+    duration = as.numeric(last(time)-first(time)),
+    observers = n_distinct(observer),
+    observations = n(),
+    nbp = sum(row_total),
+    age_mean = mean(age_mean),
+    gender_female = sum(gender_female)/nbp,
+    gender_male = sum(gender_male)/nbp
+    ) %>%
+  mutate_if(is.numeric, round, digits=1) %>%
+  mutate(
+    tair_mf = c(24.9,29.3,29.7,25.0, #14/6/2023
+                20.0,25.9,25.2,21.8, #15/6/2023
+                27.2,30.2,31.7,30.6, #24/6/2023
+                21.4,25.3,26.9,25.5, #10/7/2023
+                25.2,28.0,26.3,22.1, #18/7/2023
+                24.3,28.9,29.9,27.2, #21/8/2023
+                24.0,28.5,31.0,28.6, #22/8/2023
+                22.7,30.6,34.6,31.7 #23/8/2023
+                )
+  ) %>%
+  #dplyr::select(-survey_id) %>%
+  st_drop_geometry()
+
+
+bcs_sum_s %>%
+  group_by(date) %>%
+  summarise(
+    jour = weekdays(first(date), abbreviate = T),
+    tair_mf_m = mean(tair_mf),
+    campagnes_n = n_distinct(survey_id),
+    enqueteurs_n = mean(observers),    
+    duree_m = mean(duration),
+    observations_m = mean(observations),
+    personnes_m = mean(nbp),
+    age_m = mean(age_mean),
+    hommes_p = mean(gender_male),
+    femmes_p = mean(gender_female)
+  ) %>%
+  mutate_at(vars(campagnes_n,enqueteurs_n,observations_m,personnes_m), round, digits=0) %>%
+  mutate_at(vars(tair_mf_m,duree_m,age_m), round, digits=1) %>%
+  mutate_at(vars(hommes_p,femmes_p), round, digits=2) %>%
+  kable(
+    format = "html",
+    col.names = c("Date","Jour","Tair MF (°C)","Campagnes","Enqueteurs","Durée (min.)","Observations","Personnes","Age","Hommes (%)","Femmes (%)"),
+    align=rep('lcccccccccc'),
+    caption = "Situations statiques, résumé par journée.") %>%
+  kable_styling(bootstrap_options = c("striped","hover","bordered"), full_width = F, html_font = "Times New Roman") %>%
+  column_spec(1, width = "7em", bold = T) %>%
+  as_image(file = here("outcomes","obs_resume_jour_s.jpg"), zoom = 3)
+
+
+bcs_sum_m %>%
+  group_by(date) %>%
+  summarise(
+    jour = weekdays(first(date), abbreviate = T),
+    tair_mf_m = mean(tair_mf),
+    campagnes_n = n_distinct(survey_id),
+    enqueteurs_n = mean(observers),    
+    duree_m = mean(duration),
+    observations_m = mean(observations),
+    personnes_m = mean(nbp),
+    age_m = mean(age_mean),
+    hommes_p = mean(gender_male),
+    femmes_p = mean(gender_female)
+  ) %>%
+  mutate_at(vars(campagnes_n,enqueteurs_n,observations_m,personnes_m), round, digits=0) %>%
+  mutate_at(vars(tair_mf_m,duree_m,age_m), round, digits=1) %>%
+  mutate_at(vars(hommes_p,femmes_p), round, digits=2) %>%
+  kable(
+    format = "html",
+    col.names = c("Date","Jour","Tair MF (°C)","Campagnes","Enqueteurs","Durée (min.)","Observations","Personnes","Age","Hommes (%)","Femmes (%)"),
+    align=rep('lcccccccccc'),
+    caption = "Situations en mouvement, résumé par journée.") %>%
+  kable_styling(bootstrap_options = c("striped","hover","bordered"), full_width = F, html_font = "Times New Roman") %>%
+  column_spec(1, width = "7em", bold = T) %>%
+  as_image(file = here("outcomes","obs_resume_jour_m.jpg"), zoom = 3)
+
+
+
+```
+
+
+## frequentation
+```{r}
+
+plot_s =
+df_s %>%
+  group_by(survey_id) %>%
+  summarise(
+    date = as.character(first(date)),
+    time = first(tc),
+    ref = paste0(date," ",time),
+    nbp = sum(row_total)
+  ) %>%
+  dplyr::select(-survey_id) %>%
+  st_drop_geometry() %>%
+  ggplot(aes(x = ref, y = nbp, fill = date)) +
+    geom_col() +
+    scale_fill_manual(values = wes_palette("Royal1", 8, type = "continuous")) +
+  ylim(0,170)+
+  labs(
+    title = "Situations statiques",
+    x = "",
+    y = "frequentation (nb personnes)"
+  ) +
+  theme_linedraw() +
+  theme(
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+    legend.position = "none")
+
+
+plot_m =
+df_m %>%
+  group_by(survey_id) %>%
+  summarise(
+    date = as.character(first(date)),
+    time = first(tc),
+    ref = paste0(date," ",time),
+    nbp = sum(row_total)
+  ) %>%
+  dplyr::select(-survey_id) %>%
+  st_drop_geometry() %>%
+  ggplot(aes(x = ref, y = nbp, fill = date)) +
+    geom_col() +
+    scale_fill_manual(values = wes_palette("Royal1", 8, type = "continuous")) +
+  ylim(0,170)+
+  labs(
+    title = "Situations en mouvement",
+    x = "",
+    y = ""
+  ) +
+  theme_linedraw() +
+  theme(
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+    legend.position = "none")
+
+ggarrange(plot_s,plot_m)
+
+ggsave(here("outcomes","obs_general_frequentation.jpg"), width = 3000, height = 1500, units = "px", dpi = 200)
+
+```
+
+
+```{r}
+
+df_s %>%
+  group_by(survey_id,stay_time) %>%
+  summarise(
+    date = as.character(first(date)),
+    time = first(tc),
+    ref = paste0(date," ",time),
+    nbp = sum(row_total)
+  ) %>%
+  st_drop_geometry() %>%
+  dplyr::select(-survey_id) %>%
+  drop_na(stay_time) %>%
+  ggplot(aes(x = ref, y = nbp, fill = stay_time)) +
+    geom_col() +
+    scale_fill_manual(values = wes_palette("Royal1", 8, type = "continuous"),
+                      limits = c("0_2min_short","3_6min_brief","7_12min_break","13_20min_long")) +
+  ylim(0,170) +
+  labs(
+    title = "Situations statiques. Temps de séjour",
+    x = "",
+    y = ""
+  ) +
+  theme_linedraw() +
+  theme(
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+ggsave(here("outcomes","obs_stat_s_temps.jpg"), width = 2000, height = 1500, units = "px", dpi = 200)
+
+
+
+df_s %>%
+  group_by(survey_id,activity) %>%
+  summarise(
+    date = as.character(first(date)),
+    time = first(tc),
+    ref = paste0(date," ",time),
+    nbp = sum(row_total)
+  ) %>%
+  st_drop_geometry() %>%
+  dplyr::select(-survey_id) %>%
+  drop_na(activity) %>%
+  ggplot(aes(x = ref, y = nbp, fill = activity)) +
+    geom_col() +
+    scale_fill_manual(values = wes_palette("Royal1", 20, type = "continuous")) +
+  ylim(0,170) +
+  labs(
+    title = "Situations statiques. Activité",
+    x = "",
+    y = ""
+  ) +
+  theme_linedraw() +
+  theme(
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+ggsave(here("outcomes","obs_stat_s_activite.jpg"), width = 2000, height = 1500, units = "px", dpi = 200)
+
+df_s %>%
+  group_by(survey_id,posture) %>%
+  summarise(
+    date = as.character(first(date)),
+    time = first(tc),
+    ref = paste0(date," ",time),
+    nbp = sum(row_total)
+  ) %>%
+  st_drop_geometry() %>%
+  dplyr::select(-survey_id) %>%
+  drop_na(posture) %>%
+  ggplot(aes(x = ref, y = nbp, fill = posture)) +
+    geom_col() +
+    scale_fill_manual(values = wes_palette("Royal1", 8, type = "continuous")) +
+  ylim(0,170) +
+  labs(
+    title = "Situations statiques. Posture",
+    x = "",
+    y = ""
+  ) +
+  theme_linedraw() +
+  theme(
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+ggsave(here("outcomes","obs_stat_s_posture.jpg"), width = 2000, height = 1500, units = "px", dpi = 200)
+
+```
+
+
 # Plots
 
 ## Single observations
@@ -486,23 +779,79 @@ s = df_s
 bck +
 #ggplot()+
   geom_sf(data = m, lwd = 0.4, col = "black", alpha = 0.1)+
+  scale_fill_manual(values = wes_palette("Zissou1", 2, type = "discrete")) +
   geom_sf(data = s, alpha = 0.5, col = "black", shape = 3, aes(size = row_total/2))+
   geom_sf(data = map_tree$osm_points, size = 1, col = "#4A6C6F") +
   geom_sf(data = map_building_civic$osm_polygons, col = "grey25", fill = "grey25") +
   geom_sf(data = st_transform(buildings, 4326), col = "grey25", fill = "grey25")+
-  xlim(bbox_4326[["xmin"]],bbox_4326[["xmax"]])+
-  ylim(bbox_4326[["ymin"]],bbox_4326[["ymax"]])+
+  xlim(bbox_4326[["xmin"]]+0.0008,bbox_4326[["xmax"]]-0.0003)+
+  ylim(bbox_4326[["ymin"]]+0.0005,bbox_4326[["ymax"]]-0.0003)+
   theme_carto+
   theme(legend.position = "none")
 
-ggsave(here("outcomes","plot_obs.jpg"), width = 3000, height = 2000, units = "px", dpi = 200)
+ggsave(here("outcomes","obs_general.jpg"), width = 3000, height = 2000, units = "px", dpi = 200)
+
+
+bck_atlas +
+#ggplot()+
+  geom_sf(data = m, lwd = 0.4, col = "red", alpha = 0.1)+
+  geom_sf(data = s, alpha = 0.5, col = "red", shape = 3, aes(size = row_total/3))+
+  #geom_sf(data = map_tree$osm_points, size = 1, col = "#4A6C6F") +
+  geom_sf(data = map_building_civic$osm_polygons, col = "grey80", fill = "grey80") +
+  geom_sf(data = st_transform(buildings, 4326), col = "grey80", fill = "grey80")+
+  xlim(bbox_4326[["xmin"]]+0.001,bbox_4326[["xmax"]]-0.0005)+
+  ylim(bbox_4326[["ymin"]]+0.0007,bbox_4326[["ymax"]]-0.0004)+
+  theme_carto+
+  theme(legend.position = "none")+
+  facet_grid(
+    rows = vars(tc),
+    cols = vars(date)
+  )
+
+ggsave(here("outcomes","obs_general_atlas.jpg"), width = 5000, height = 3000, units = "px", dpi = 200)
+
+
+bck_atlas +
+#ggplot()+
+  geom_sf(data = m, lwd = 0.4, col = "red", alpha = 0.1)+
+  geom_sf(data = s, alpha = 0.5, col = "red", shape = 3, aes(size = row_total/3))+
+  #geom_sf(data = map_tree$osm_points, size = 1, col = "#4A6C6F") +
+  geom_sf(data = map_building_civic$osm_polygons, col = "grey80", fill = "grey80") +
+  geom_sf(data = st_transform(buildings, 4326), col = "grey80", fill = "grey80")+
+  xlim(bbox_4326[["xmin"]]+0.001,bbox_4326[["xmax"]]-0.0005)+
+  ylim(bbox_4326[["ymin"]]+0.0007,bbox_4326[["ymax"]]-0.0004)+
+  theme_carto+
+  theme(legend.position = "none")+
+  facet_wrap(~tc,ncol = 4)
+
+ggsave(here("outcomes","obs_general_atlas_heure.jpg"), width = 5000, height = 3000, units = "px", dpi = 200)
+
+
+bck_atlas +
+#ggplot()+
+  geom_sf(data = m, lwd = 0.4, col = "red", alpha = 0.1)+
+  geom_sf(data = s, alpha = 0.5, col = "red", shape = 3, aes(size = row_total/3))+
+  #geom_sf(data = map_tree$osm_points, size = 1, col = "#4A6C6F") +
+  geom_sf(data = map_building_civic$osm_polygons, col = "grey80", fill = "grey80") +
+  geom_sf(data = st_transform(buildings, 4326), col = "grey80", fill = "grey80")+
+  xlim(bbox_4326[["xmin"]]+0.001,bbox_4326[["xmax"]]-0.0005)+
+  ylim(bbox_4326[["ymin"]]+0.0007,bbox_4326[["ymax"]]-0.0004)+
+  theme_carto+
+  theme(legend.position = "none")+
+  facet_wrap(~date,ncol = 4)
+
+ggsave(here("outcomes","obs_general_atlas_date.jpg"), width = 5000, height = 3000, units = "px", dpi = 200)
 
 ```
 
 
+
+
+
+
 ## Hexbins by id & fileid
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 
 grid = 
   st_make_grid(
@@ -561,7 +910,7 @@ g_hb = grid
 ```
 
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 
 bck +
   geom_sf(data=s_hb, aes(fill = nbp),color = NA)+
@@ -608,7 +957,7 @@ ggsave(
 
 
 #Leaflet
-```{r}
+```{r eval=FALSE, include=FALSE}
 
 library(magrittr)
 library(leaflet)
