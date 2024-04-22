@@ -29,7 +29,7 @@ library(magick)
 # Observation data
 ```{r}
 
-filenames <- list.files(here("source"),pattern="*.gpkg$")
+filenames <- list.files(here("source"),pattern="*.csv$")
 
 layers_s = c("09h30_staying","12h30_staying","15h30_staying","18h30_staying")
 layers_m = c("09h30_moving","12h30_moving","15h30_moving","18h30_moving")
